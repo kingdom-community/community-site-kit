@@ -18,12 +18,13 @@ npm install @kingdom-community/community-site-kit
 ```
 
 `react`, `react-dom`, `next` (13+) and `@mui/material` (5+) are peer
-dependencies, so the kit uses the copies your site already has. Install
-`@mui/icons-material` too if you want icons on your footer links or your error
-page's home button — it is an optional peer.
+dependencies, so the kit uses the copies your site already has.
+`@mui/icons-material` is declared an optional peer, but `TopBar` imports
+`Menu`, `ExpandMore` and `OpenInNew` from it directly, so install it too unless
+you never import the package's entry point.
 
 ```bash
-npm install react react-dom next @mui/material @emotion/react @emotion/styled
+npm install react react-dom next @mui/material @mui/icons-material @emotion/react @emotion/styled
 ```
 
 ## Usage
@@ -103,10 +104,10 @@ export const SiteBottomBar = () => (
 ```
 
 Any link whose `href` starts with `http` is treated as off-site: it opens in a
-new tab with `rel="noopener noreferrer"` and gets an external-link icon. In-site
-links navigate client-side through `next/link`, and the one matching the current
-route is marked with `aria-current="page"` plus weight and an underline — never
-colour alone.
+new tab with `rel="noopener noreferrer"`, and in the top bar it also gets an
+external-link icon. In-site links navigate client-side through `next/link`, and
+the one matching the current route is marked with `aria-current="page"` plus
+weight and an underline — never colour alone.
 
 Below the `md` breakpoint the top bar collapses into a hamburger drawer. Pass
 `responsive={false}` if you would rather it did not.
@@ -260,8 +261,9 @@ Everything else is a prop.
 
 **Styles** — `import {styles} from '@kingdom-community/community-site-kit'` for
 the shared `sx` factories the chrome is built from (`pageStyle`,
-`sectionHeaderStyle`, `panelStyle`, `heroBoxStyle`, and the rest). All are
-functions of the MUI theme, so restyling them means restyling your palette.
+`sectionHeaderStyle`, `panelStyle`, `heroBoxStyle`, and the rest). Most are
+functions of the MUI theme, so restyling them means restyling your palette; a
+few (`toggleSwitchBoxStyle`, `navDrawerDividerStyle`) are plain `sx` objects.
 
 ## Development
 
