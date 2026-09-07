@@ -5,6 +5,38 @@ import type {Theme} from '@mui/material/styles';
 // are made in one place rather than per component. Everything is a function of
 // the MUI theme, so a site restyles all of it by changing its own palette.
 
+// Media query matching a visitor who has asked their operating system to reduce
+// motion. Exported so a consumer writing its own animated `sx` can honour the
+// same preference without restating the query string, and so the tests can
+// assert the factories below honour it.
+export const REDUCED_MOTION_QUERY = '@media (prefers-reduced-motion: reduce)';
+
+// Cancels a transition for reduced-motion visitors, leaving the element's
+// resting and active positions alone. For a style whose transform *is* the
+// layout — the skip link parked off-screen, say — dropping the transform would
+// break the component rather than calm it; only the travel between the two
+// states is the motion.
+//
+// Spread this **last** into a style object: Emotion serializes keys in
+// insertion order, and a media query carrying the same specificity as the rule
+// it overrides only wins while it comes later in the generated stylesheet.
+export const withoutTransition = {
+    [REDUCED_MOTION_QUERY]: {
+        transition: 'none'
+    }
+};
+
+// Cancels a hover effect's movement for reduced-motion visitors, leaving the
+// colour and shadow feedback of that same hover intact — those are feedback
+// rather than motion, and dropping them would cost the affordance without
+// benefiting anyone. Spread last, for the reason given above.
+export const withoutHoverMotion = {
+    [REDUCED_MOTION_QUERY]: {
+        transition: 'none',
+        '&:hover': {transform: 'none'}
+    }
+};
+
 const commonTransition = {
     transition: 'all 0.3s ease'
 };
@@ -77,7 +109,8 @@ export const navButtonStyle = (theme: Theme) => ({
     '&:hover': {
         transform: 'translateY(-2px)',
         ...commonHoverBg(theme)
-    }
+    },
+    ...withoutHoverMotion
 });
 
 export const footerButtonStyle = (theme: Theme) => ({
@@ -96,7 +129,8 @@ export const brandNameStyle = (theme: Theme) => ({
 export const toggleSwitchBoxStyle = {
     flexGrow: 0,
     ...commonTransition,
-    '&:hover': {transform: 'scale(1.1)'}
+    '&:hover': {transform: 'scale(1.1)'},
+    ...withoutHoverMotion
 };
 
 export const versionNumberStyle = (theme: Theme) => ({
@@ -107,7 +141,8 @@ export const versionNumberStyle = (theme: Theme) => ({
     ...commonHoverBg(theme),
     fontFamily: 'monospace',
     fontWeight: theme.typography.fontWeightMedium,
-    ...commonTransition
+    ...commonTransition,
+    ...withoutHoverMotion
 });
 
 export const flexContainerStyle = (theme: Theme, options?: {

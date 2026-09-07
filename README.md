@@ -265,6 +265,30 @@ the shared `sx` factories the chrome is built from (`pageStyle`,
 functions of the MUI theme, so restyling them means restyling your palette; a
 few (`toggleSwitchBoxStyle`, `navDrawerDividerStyle`) are plain `sx` objects.
 
+Everything the kit animates honours `prefers-reduced-motion` already. For your
+own animated `sx`, the same three pieces are exported alongside them:
+
+```tsx
+import {styles} from '@kingdom-community/community-site-kit';
+
+const cardStyle = {
+    transition: 'all 0.3s ease',
+    '&:hover': {transform: 'translateY(-4px)', boxShadow: 6},
+    ...styles.withoutHoverMotion    // spread LAST — see below
+};
+```
+
+`withoutHoverMotion` cancels the transition and the hover's movement while
+leaving its colour and shadow feedback intact; `withoutTransition` cancels only
+the transition, for a style whose transform is its layout rather than its
+animation (the skip link, parked off-screen, is the kit's own example — undoing
+that transform would leave it sitting over the page). `REDUCED_MOTION_QUERY` is
+the query string itself, if you would rather write the block by hand.
+
+Spread either one **last**. Emotion serializes keys in insertion order, and the
+override carries the same specificity as the rule it overrides, so it only wins
+while it comes later in the generated stylesheet.
+
 ## Development
 
 ```bash

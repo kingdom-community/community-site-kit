@@ -3,6 +3,14 @@ import {cleanup, render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {SkipLink} from '../src/components/SkipLink.js';
+import {REDUCED_MOTION_QUERY} from '../src/styles/styles.js';
+
+// The reduced-motion rule is inside the component's own `sx`, so the only place
+// it is observable is the stylesheet Emotion injects for the rendered element.
+const injectedCss = () =>
+    Array.from(document.querySelectorAll('style[data-emotion]'))
+        .map((tag) => tag.textContent ?? '')
+        .join('');
 
 afterEach(cleanup);
 
@@ -43,6 +51,21 @@ describe('SkipLink', () => {
         await user.tab();
 
         expect(document.activeElement).toBe(screen.getByRole('link', {name: 'Skip to main content'}));
+    });
+
+    // A visitor who asked for less motion still gets the link — it just arrives
+    // instead of sliding. Cancelling its transform under the same query, as the
+    // hover styles in styles.ts do, would unpark it and leave it sitting over
+    // the page permanently.
+    it('drops the slide but not the parking under reduced motion', () => {
+        render(<SkipLink/>);
+        const reduced = injectedCss().match(
+            new RegExp(`${REDUCED_MOTION_QUERY.replace(/[()]/g, '\\$&')}\\{[^}]*\\}`)
+        );
+
+        expect(reduced).not.toBeNull();
+        expect(reduced?.[0]).toContain('transition:none');
+        expect(reduced?.[0]).not.toContain('transform');
     });
 
     // It is parked off-screen with a transform rather than `display: none`, so
