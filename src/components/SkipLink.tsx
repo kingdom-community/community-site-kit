@@ -1,6 +1,8 @@
 import React from 'react';
 import {Box} from '@mui/material';
 
+import {withoutTransition} from '../styles/styles.js';
+
 export interface SkipLinkProps {
     // The id of the page's main content element. Render `<main id="main">` (or
     // whatever you pass here) on every page for the link to land somewhere.
@@ -34,7 +36,12 @@ export const SkipLink: React.FC<SkipLinkProps> = ({targetId = 'main', label = 'S
             // out of the tab order and defeat the purpose.
             transform: 'translateY(-150%)',
             transition: 'transform 0.2s ease',
-            '&:focus': {transform: 'translateY(0)'}
+            '&:focus': {transform: 'translateY(0)'},
+            // Reduced motion drops the slide, not the parking: the link still
+            // sits off-screen and still arrives on focus, it just stops
+            // travelling there. Cancelling the transform instead would leave it
+            // permanently visible over the page.
+            ...withoutTransition
         }}
     >
         {label}
