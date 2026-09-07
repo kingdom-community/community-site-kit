@@ -17,6 +17,7 @@ import {
     pageStyle,
     panelStyle,
     sectionHeaderStyle,
+    switchTrackStyle,
     toggleSwitchBoxStyle,
     toolbarStyle,
     versionNumberStyle
@@ -164,6 +165,30 @@ describe('versionNumberStyle', () => {
     it('takes the same palette-aware wash as the nav buttons', () => {
         expect(versionNumberStyle(light).backgroundColor).toBe(navButtonStyle(light)['&:hover'].backgroundColor);
         expect(versionNumberStyle(dark).backgroundColor).toBe(navButtonStyle(dark)['&:hover'].backgroundColor);
+    });
+});
+
+describe('brandNameStyle', () => {
+    // `inline-block`, not `inline`: an inline box takes the text's box model, so
+    // vertical margin, height and a transform on the wordmark would be silently
+    // ignored. Every site in the fleet that renders this wordmark was setting
+    // the value at the call site to get a block box.
+    it('gives the wordmark a box a caller can style', () => {
+        expect(brandNameStyle(light).display).toBe('inline-block');
+    });
+});
+
+describe('switchTrackStyle', () => {
+    it('picks the track grey for the palette mode', () => {
+        expect(switchTrackStyle(dark).backgroundColor).toBe('#8796A5');
+        expect(switchTrackStyle(light).backgroundColor).toBe('#aab4be');
+    });
+
+    // MUI's own track is translucent; the switch wants a solid one, and the
+    // opacity travels with the colour so no caller has to remember both.
+    it('paints the track solid', () => {
+        expect(switchTrackStyle(light).opacity).toBe(1);
+        expect(switchTrackStyle(dark).opacity).toBe(1);
     });
 });
 

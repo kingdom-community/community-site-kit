@@ -1,5 +1,7 @@
 import {styled, Switch} from '@mui/material';
 
+import {switchTrackStyle} from '../styles/styles.js';
+
 // A sun/moon toggle for the colour mode, styled as an iOS-shaped switch with the
 // icon drawn on the thumb.
 //
@@ -40,14 +42,13 @@ export const createColorModeToggleSwitch = ({
                 '& .MuiSwitch-thumb:before': {
                     backgroundImage: `url("${darkIconUrl}")`
                 },
-                '& + .MuiSwitch-track': {
-                    opacity: 1,
-                    backgroundColor: theme.palette.mode === 'dark' ? '#8796A5' : '#aab4be'
-                }
+                '& + .MuiSwitch-track': switchTrackStyle(theme)
             }
         },
         '& .MuiSwitch-thumb': {
-            backgroundColor: theme.palette.mode === 'dark' ? '#000000' : '#ffffff',
+            // The palette already carries exactly these two values, so the thumb
+            // asks it rather than restating them.
+            backgroundColor: theme.palette.mode === 'dark' ? theme.palette.common.black : theme.palette.common.white,
             width: 32,
             height: 32,
             '&:before': {
@@ -63,8 +64,7 @@ export const createColorModeToggleSwitch = ({
             }
         },
         '& .MuiSwitch-track': {
-            opacity: 1,
-            backgroundColor: theme.palette.mode === 'dark' ? '#8796A5' : '#aab4be',
+            ...switchTrackStyle(theme),
             borderRadius: 20 / 2
         }
     }));

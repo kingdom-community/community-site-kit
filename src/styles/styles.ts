@@ -85,12 +85,33 @@ export const footerButtonStyle = (theme: Theme) => ({
     marginX: theme.spacing(1)
 });
 
+// The brand wordmark in the top bar. `inline-block` rather than `inline`: the
+// margin and the box model of an inline box are the text's, so a caller styling
+// the wordmark — spacing it, sizing it, lifting it on hover — would find half of
+// what it wrote ignored. Every site in the fleet that renders this wordmark
+// overrides the value at the call site to get a block box; the helper is where
+// that belongs.
 export const brandNameStyle = (theme: Theme) => ({
-    display: 'inline',
+    display: 'inline-block',
     marginRight: theme.spacing(2),
     fontWeight: 700,
     letterSpacing: '-0.01em',
     color: 'inherit'
+});
+
+// Track greys for the colour-mode switch, carried over from MUI's iOS-style
+// switch demo that ColorModeToggleSwitch is built on. They are not brand
+// colours and have no counterpart in a palette, so they are named here rather
+// than written out at each rule that needs them.
+export const SWITCH_TRACK_DARK = '#8796A5';
+export const SWITCH_TRACK_LIGHT = '#aab4be';
+
+// Track of the colour-mode switch. Shared by the checked and the unchecked rule
+// in ColorModeToggleSwitch, so the track cannot change shade as the switch is
+// toggled — which is what writing the pair out twice invites.
+export const switchTrackStyle = (theme: Theme) => ({
+    opacity: 1,
+    backgroundColor: theme.palette.mode === 'dark' ? SWITCH_TRACK_DARK : SWITCH_TRACK_LIGHT
 });
 
 export const toggleSwitchBoxStyle = {
