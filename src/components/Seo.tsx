@@ -1,5 +1,5 @@
-import Head from 'next/head';
-import {useRouter} from 'next/router';
+import Head from 'next/head.js';
+import {useRouter} from 'next/router.js';
 import React from 'react';
 
 import {absoluteUrl, canonicalPath, siteBaseUrl, socialImageUrl} from '../utils/seo.js';
