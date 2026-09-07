@@ -3,7 +3,14 @@ import {createTheme, CssBaseline, ThemeProvider, useTheme} from '@mui/material';
 import type {Theme, ThemeOptions} from '@mui/material/styles';
 
 import {ColorModeContext} from '../utils/ColorModeContext.js';
-import {DEFAULT_COLOR_MODE_STORAGE_KEY, type ColorMode, resolveInitialColorMode} from '../utils/colorMode.js';
+import {
+    DEFAULT_COLOR_MODE_STORAGE_KEY,
+    applyColorModeToDocument,
+    readStoredColorMode,
+    resolveInitialColorMode,
+    storeColorMode,
+    type ColorMode
+} from '../utils/colorMode.js';
 import {ColorModeToggleSwitch} from './ColorModeToggleSwitch.js';
 import {toggleSwitchBoxStyle} from '../styles/styles.js';
 import {Box} from '@mui/material';
@@ -52,19 +59,25 @@ export const ColorModeProvider: React.FC<ColorModeProviderProps> = ({
     const [mode, setMode] = useState<ColorMode>(defaultMode);
 
     useEffect(() => {
-        let stored: string | null = null;
-        try {
-            stored = window.localStorage.getItem(storageKey);
-        } catch {
-            // Storage can be unavailable outright (private browsing, a browser
-            // set to block site data). That is a reason to fall back to the
-            // system preference, not to fail to render a page.
-        }
+        // Storage can be unavailable outright (private browsing, a browser set
+        // to block site data). readStoredColorMode reports that as "nothing
+        // saved", which is a reason to fall back to the system preference, not
+        // to fail to render a page.
+        const stored = readStoredColorMode(storageKey);
         const prefersDark = typeof window.matchMedia === 'function'
             ? window.matchMedia('(prefers-color-scheme: dark)').matches
             : defaultMode === 'dark';
         setMode(resolveInitialColorMode(stored, prefersDark));
     }, [storageKey, defaultMode]);
+
+    // Keep <html data-color-mode> and the document's color-scheme describing
+    // the mode actually in effect. The bootstrap script stamps them once, before
+    // first paint; without this they would still describe the booted-in mode
+    // after the visitor toggles, leaving a site's own [data-color-mode] CSS —
+    // and the browser-painted scrollbars — a mode behind.
+    useEffect(() => {
+        applyColorModeToDocument(mode);
+    }, [mode]);
 
     const contextValue = useMemo(
         () => ({
@@ -72,14 +85,10 @@ export const ColorModeProvider: React.FC<ColorModeProviderProps> = ({
             toggleColorMode: () => {
                 setMode((previous) => {
                     const next: ColorMode = previous === 'light' ? 'dark' : 'light';
-                    try {
-                        // Persist the explicit choice so it survives navigation
-                        // and return visits.
-                        window.localStorage.setItem(storageKey, next);
-                    } catch {
-                        // Unwritable storage costs the visitor the memory of the
-                        // choice, not the choice itself.
-                    }
+                    // Persist the explicit choice so it survives navigation and
+                    // return visits. Unwritable storage costs the visitor the
+                    // memory of the choice, not the choice itself.
+                    storeColorMode(next, storageKey);
                     return next;
                 });
             }

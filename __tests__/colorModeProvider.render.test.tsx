@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event';
 
 import {ColorModeProvider, ColorModeToggle} from '../src/components/ColorModeProvider.js';
 import {ColorModeContext} from '../src/utils/ColorModeContext.js';
+import {COLOR_MODE_ATTRIBUTE} from '../src/utils/colorMode.js';
 
 // Reports the mode actually in effect, from the theme rather than from the
 // context, so the tests check what a real component would see.
@@ -43,6 +44,8 @@ const stubMatchMedia = (prefersDark: boolean) => {
 
 beforeEach(() => {
     window.localStorage.clear();
+    document.documentElement.removeAttribute(COLOR_MODE_ATTRIBUTE);
+    document.documentElement.style.colorScheme = '';
     stubMatchMedia(false);
 });
 
@@ -169,6 +172,36 @@ describe('ColorModeProvider', () => {
 
         expect(screen.getByTestId('mode').textContent).toBe('dark/dark');
         vi.restoreAllMocks();
+    });
+
+    // The mode a site's own [data-color-mode] CSS and the browser's own
+    // scrollbar painting go by. The bootstrap script stamps these once before
+    // first paint; the provider has to keep them current afterwards, or every
+    // toggle leaves them a mode behind until the next full page load.
+    it('keeps the document element describing the mode in effect', async () => {
+        const user = userEvent.setup();
+        render(
+            <ColorModeProvider defaultMode="light" cssBaseline={false}>
+                <ColorModeToggle/>
+            </ColorModeProvider>
+        );
+        expect(document.documentElement.getAttribute(COLOR_MODE_ATTRIBUTE)).toBe('light');
+        expect(document.documentElement.style.colorScheme).toBe('light');
+
+        await user.click(screen.getByRole('checkbox', {name: 'Toggle dark mode'}));
+
+        expect(document.documentElement.getAttribute(COLOR_MODE_ATTRIBUTE)).toBe('dark');
+        expect(document.documentElement.style.colorScheme).toBe('dark');
+    });
+
+    it('stamps a saved choice onto the document element too', () => {
+        window.localStorage.setItem('community-site-color-mode', 'light');
+        render(
+            <ColorModeProvider cssBaseline={false}>
+                <ModeProbe/>
+            </ColorModeProvider>
+        );
+        expect(document.documentElement.getAttribute(COLOR_MODE_ATTRIBUTE)).toBe('light');
     });
 
     it('works in a browser with no matchMedia at all', () => {

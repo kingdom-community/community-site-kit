@@ -66,6 +66,46 @@ later. Pick the `defaultMode` most of your visitors use.
 `SkipLink` is the first focusable element on the page; render your page's content
 inside `<main id="main">` for it to land on.
 
+The provider also stamps the mode in effect onto `<html>` as
+`data-color-mode="light|dark"`, and sets the document's `color-scheme`, so plain
+CSS and the browser-painted furniture (scrollbars, form controls, the overscroll
+area) follow the toggle.
+
+Everything above happens after hydration. If your site paints anything from CSS
+rather than from the MUI theme — a `<html[data-color-mode]>` rule in a global
+stylesheet, most often the page background — that first paint still needs the
+answer before any bundle has loaded. Render the bootstrap script into `<head>`,
+in `pages/_document.tsx`:
+
+```tsx
+import {Head, Html, Main, NextScript} from 'next/document';
+import {colorModeBootstrapScript} from '@kingdom-community/community-site-kit';
+
+const bootstrap = colorModeBootstrapScript({
+    storageKey: 'ember-hollow-color-mode',
+    defaultMode: 'dark'
+});
+
+export default function Document() {
+    return (
+        <Html lang="en">
+            <Head>
+                <script dangerouslySetInnerHTML={{__html: bootstrap}}/>
+            </Head>
+            <body>
+                <Main/>
+                <NextScript/>
+            </body>
+        </Html>
+    );
+}
+```
+
+It is a blocking script that resolves the same "saved choice, else
+`prefers-color-scheme`, else `defaultMode`" question the provider does, and
+stamps the same attribute — so the provider's later answer is visually a no-op.
+Pass it the same `storageKey` and `defaultMode` as the provider.
+
 ### 2. Build your page chrome
 
 ```tsx
@@ -253,8 +293,10 @@ Everything else is a prop.
 `createColorModeToggleSwitch`, `TopBar`, `BottomBar`, `ErrorPage`,
 `UnavailablePanel`, `SkipLink`, `NextLinkComposed`, `createSeo`.
 
-**Utilities** — `resolveInitialColorMode`, `DEFAULT_COLOR_MODE_STORAGE_KEY`,
-`ColorModeContext`, `isActiveNavLink`, `isExternalNavLink`, `canonicalPath`,
+**Utilities** — `resolveInitialColorMode`, `readStoredColorMode`,
+`storeColorMode`, `applyColorModeToDocument`, `colorModeBootstrapScript`,
+`COLOR_MODE_BOOTSTRAP_SCRIPT`, `COLOR_MODE_ATTRIBUTE`,
+`DEFAULT_COLOR_MODE_STORAGE_KEY`, `ColorModeContext`, `isActiveNavLink`, `isExternalNavLink`, `canonicalPath`,
 `absoluteUrl`, `siteBaseUrl`, `socialImageUrl`, `DEFAULT_BASE_URL`,
 `sitemapPaths`, `collectionPaths`, `sitemapXml`, `robotsTxt`,
 `sitemapPathProblems`, `SITEMAP_ROUTE`, `DEFAULT_DISALLOWED_CRAWL_PATHS`.
