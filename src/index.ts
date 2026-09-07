@@ -19,9 +19,16 @@ export {SkipLink, type SkipLinkProps} from './components/SkipLink.js';
 
 export {ColorModeContext, type ColorModeContextValue} from './utils/ColorModeContext.js';
 export {
+    COLOR_MODE_ATTRIBUTE,
+    COLOR_MODE_BOOTSTRAP_SCRIPT,
     DEFAULT_COLOR_MODE_STORAGE_KEY,
+    applyColorModeToDocument,
+    colorModeBootstrapScript,
+    readStoredColorMode,
     resolveInitialColorMode,
-    type ColorMode
+    storeColorMode,
+    type ColorMode,
+    type ColorModeBootstrapScriptOptions
 } from './utils/colorMode.js';
 export {
     isActiveNavLink,
