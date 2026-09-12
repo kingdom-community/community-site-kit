@@ -13,10 +13,10 @@ import {
     Toolbar,
     Typography
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import {useRouter} from 'next/router';
+import MenuIcon from '@mui/icons-material/Menu.js';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore.js';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew.js';
+import {useRouter} from 'next/router.js';
 import React, {useState} from 'react';
 
 import {NextLinkComposed} from './NextLinkComposed.js';

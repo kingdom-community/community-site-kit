@@ -1,5 +1,5 @@
 import React from 'react';
-import NextLink, {type LinkProps as NextLinkProps} from 'next/link';
+import NextLink, {type LinkProps as NextLinkProps} from 'next/link.js';
 
 // Bridges next/link's client-side routing into MUI's `component` prop pattern
 // (component={NextLinkComposed} to="/path"), so any MUI component that renders
