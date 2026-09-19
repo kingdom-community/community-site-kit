@@ -69,17 +69,24 @@ const NavButton: React.FC<{href: string; active?: boolean; children: React.React
 // the always-visible nav rather than one slot each.
 const NavDropdown: React.FC<{menu: NavMenu}> = ({menu}) => {
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+    const open = !!anchorEl;
     return (
         <>
             <Button
                 color="inherit"
                 endIcon={<ExpandMoreIcon fontSize="small"/>}
                 onClick={(event) => setAnchorEl(event.currentTarget)}
+                // The chevron says "this opens a menu" and "it is open now" to a
+                // sighted visitor; these two say the same to a screen reader,
+                // which otherwise hears a button no different from one that
+                // navigates.
+                aria-haspopup="true"
+                aria-expanded={open ? 'true' : undefined}
                 sx={(theme) => navButtonStyle(theme)}
             >
                 {menu.label}
             </Button>
-            <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={() => setAnchorEl(null)}>
+            <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
                 {menu.links.map((link) => {
                     const isExternal = isExternalNavLink(link.href);
                     return (
@@ -97,6 +104,23 @@ const NavDropdown: React.FC<{menu: NavMenu}> = ({menu}) => {
                 })}
             </Menu>
         </>
+    );
+};
+
+// An in-site drawer entry. `selected` only tints the background, which is
+// colour alone; `aria-current` is what makes "you are here" survive a screen
+// reader, the same way `NavButton` carries it in the inline bar.
+const DrawerRouteItem: React.FC<{link: NavLink; pathname: string}> = ({link, pathname}) => {
+    const active = isActiveNavLink(pathname, link.href);
+    return (
+        <ListItemButton
+            component={NextLinkComposed}
+            to={link.href}
+            selected={active}
+            aria-current={active ? 'page' : undefined}
+        >
+            <ListItemText primary={link.label}/>
+        </ListItemButton>
     );
 };
 
@@ -118,14 +142,7 @@ const NavDrawer: React.FC<{
                         <OpenInNewIcon fontSize="small"/>
                     </ListItemButton>
                 ) : (
-                    <ListItemButton
-                        key={link.href}
-                        component={NextLinkComposed}
-                        to={link.href}
-                        selected={isActiveNavLink(pathname, link.href)}
-                    >
-                        <ListItemText primary={link.label}/>
-                    </ListItemButton>
+                    <DrawerRouteItem key={link.href} link={link} pathname={pathname}/>
                 )
             )}
             {menus.map((menu) => (
@@ -147,14 +164,7 @@ const NavDrawer: React.FC<{
                                 <OpenInNewIcon fontSize="small"/>
                             </ListItemButton>
                         ) : (
-                            <ListItemButton
-                                key={link.href}
-                                component={NextLinkComposed}
-                                to={link.href}
-                                selected={isActiveNavLink(pathname, link.href)}
-                            >
-                                <ListItemText primary={link.label}/>
-                            </ListItemButton>
+                            <DrawerRouteItem key={link.href} link={link} pathname={pathname}/>
                         )
                     )}
                 </React.Fragment>
