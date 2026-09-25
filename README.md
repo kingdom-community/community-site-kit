@@ -152,6 +152,9 @@ weight and an underline — never colour alone.
 Below the `md` breakpoint the top bar collapses into a hamburger drawer. Pass
 `responsive={false}` if you would rather it did not.
 
+Both bars render a colour-mode toggle by default, so a page using both of the
+bars above shows two. Pass `colorModeToggle={false}` to whichever bar should not carry one.
+
 ### 3. Per-page metadata
 
 ```tsx
@@ -214,11 +217,12 @@ export default function Sitemap() {
 `pages/robots.txt.ts`:
 
 ```ts
+import type {GetServerSidePropsContext} from 'next';
 import {robotsTxt, siteBaseUrl} from '@kingdom-community/community-site-kit';
 
 const DISALLOW = ['/api/', '/account'];
 
-export const getServerSideProps = async ({res}) => {
+export const getServerSideProps = async ({res}: GetServerSidePropsContext) => {
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.write(robotsTxt(siteBaseUrl(), {disallow: DISALLOW}));
     res.end();
