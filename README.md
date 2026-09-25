@@ -152,8 +152,8 @@ weight and an underline — never colour alone.
 Below the `md` breakpoint the top bar collapses into a hamburger drawer. Pass
 `responsive={false}` if you would rather it did not.
 
-Both bars render a colour-mode toggle by default, so the page above shows two.
-Pass `colorModeToggle={false}` to whichever bar should not carry one.
+Both bars render a colour-mode toggle by default, so a page using both of the
+bars above shows two. Pass `colorModeToggle={false}` to whichever bar should not carry one.
 
 ### 3. Per-page metadata
 
