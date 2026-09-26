@@ -17,7 +17,7 @@ contradicts your robots.txt).
 npm install @kingdom-community/community-site-kit
 ```
 
-`react`, `react-dom`, `next` (13+) and `@mui/material` (5+) are peer
+`react` and `react-dom` (18+), `next` (13+) and `@mui/material` (5+) are peer
 dependencies, so the kit uses the copies your site already has.
 `@mui/icons-material` is declared an optional peer, but `TopBar` imports
 `Menu`, `ExpandMore` and `OpenInNew` from it directly, so install it too unless
@@ -234,6 +234,9 @@ export default function Robots() {
 }
 ```
 
+A `disallow` list replaces the default (`DEFAULT_DISALLOWED_CRAWL_PATHS`, which
+is `['/api/']`) rather than adding to it, which is why `/api/` is repeated above.
+
 `sitemapPathProblems` audits a path list against the invariants a sitemap has to
 hold — every path site-relative, no unresolved `[dynamic]` templates, and nothing
 offered to crawlers that `robots.txt` asks them to skip. Assert it in your own
@@ -287,7 +290,7 @@ The kit reads exactly one environment variable, and only through `siteBaseUrl()`
 
 | Variable | Default | Used for |
 |---|---|---|
-| `NEXT_PUBLIC_BASE_URL` | `http://localhost:3000` | The site's own public origin. Every absolute URL the site advertises — the canonical URL, `og:url`, `og:image`, and the `<loc>` entries in `sitemap.xml` — is built from it. Must be `NEXT_PUBLIC_*` for browser code to see it; pass another name to `siteBaseUrl('MY_VAR')` if you prefer. |
+| `NEXT_PUBLIC_BASE_URL` | `http://localhost:3000` | The site's own public origin. Every absolute URL the site advertises — the canonical URL, `og:url`, `og:image`, the `<loc>` entries in `sitemap.xml`, and the `Sitemap:` line in `robots.txt` — is built from it. Must be `NEXT_PUBLIC_*` for browser code to see it; pass another name to `siteBaseUrl('MY_VAR')` if you prefer. |
 
 Everything else is a prop.
 
