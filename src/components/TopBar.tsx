@@ -1,4 +1,29 @@
+// A namespace import, never named ones (`{Box}`) from @mui/material: Next's barrel
+// optimisation rewrites named MUI imports, and under this package's strict ESM
+// the rewrite binds the CommonJS module object instead of the component (#11).
+import * as Mui from '@mui/material';
+import MenuIconImport from '@mui/icons-material/Menu.js';
+import ExpandMoreIconImport from '@mui/icons-material/ExpandMore.js';
+import OpenInNewIconImport from '@mui/icons-material/OpenInNew.js';
+import {useRouter} from 'next/router.js';
+import React, {useState} from 'react';
+
+import {NextLinkComposed} from './NextLinkComposed.js';
+import {ColorModeToggle} from './ColorModeProvider.js';
+import {interopDefault} from '../utils/interopDefault.js';
+import {isActiveNavLink, isExternalNavLink, type NavLink, type NavMenu} from '../utils/nav.js';
 import {
+    appBarStyle,
+    brandNameStyle,
+    flexContainerStyle,
+    navButtonStyle,
+    navDrawerDividerStyle,
+    navDrawerPaperStyle,
+    navDrawerSectionLabelStyle,
+    toolbarStyle
+} from '../styles/styles.js';
+
+const {
     AppBar,
     Box,
     Button,
@@ -12,26 +37,13 @@ import {
     MenuItem,
     Toolbar,
     Typography
-} from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu.js';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore.js';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew.js';
-import {useRouter} from 'next/router.js';
-import React, {useState} from 'react';
+} = Mui;
 
-import {NextLinkComposed} from './NextLinkComposed.js';
-import {ColorModeToggle} from './ColorModeProvider.js';
-import {isActiveNavLink, isExternalNavLink, type NavLink, type NavMenu} from '../utils/nav.js';
-import {
-    appBarStyle,
-    brandNameStyle,
-    flexContainerStyle,
-    navButtonStyle,
-    navDrawerDividerStyle,
-    navDrawerPaperStyle,
-    navDrawerSectionLabelStyle,
-    toolbarStyle
-} from '../styles/styles.js';
+// Each icon file is CommonJS; see interopDefault for why a plain default import
+// of one is not the component under strict ESM.
+const MenuIcon = interopDefault(MenuIconImport);
+const ExpandMoreIcon = interopDefault(ExpandMoreIconImport);
+const OpenInNewIcon = interopDefault(OpenInNewIconImport);
 
 // Internal routes navigate in the same tab; off-site links open in a new tab
 // (with rel="noopener noreferrer") and carry an external-link icon so they are
