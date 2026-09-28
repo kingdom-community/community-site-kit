@@ -16,6 +16,20 @@ export {BottomBar, type BottomBarProps, type FooterLink} from './components/Bott
 export {ErrorPage, type ErrorPageProps} from './components/ErrorPage.js';
 export {UnavailablePanel, type UnavailablePanelProps} from './components/UnavailablePanel.js';
 export {SkipLink, type SkipLinkProps} from './components/SkipLink.js';
+export {
+    CATALOGUE_CLOSE_DELAY_MS,
+    CATALOGUE_OPEN_DELAY_MS,
+    CatalogueGrid,
+    TOUCH_ONLY_QUERY,
+    type CatalogueDetailsContext,
+    type CatalogueGridItem,
+    type CatalogueGridProps
+} from './components/CatalogueGrid.js';
+export {
+    CatalogueFilterBar,
+    type CatalogueFilterBarFacet,
+    type CatalogueFilterBarProps
+} from './components/CatalogueFilterBar.js';
 
 export {ColorModeContext, type ColorModeContextValue} from './utils/ColorModeContext.js';
 export {

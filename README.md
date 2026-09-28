@@ -341,6 +341,50 @@ The rules every site gets the same way:
 The same functions are exported from the package root too, for a site that
 already imports the kit there.
 
+#### The grid and the filter bar
+
+`CatalogueGrid` is the icon grid itself: one bare tile per item, a details
+panel under a tile on hover, keyboard focus or click, and a bottom sheet on tap
+where the device cannot hover. Only one panel is open at a time, Escape closes
+it and returns focus to the tile, and the timings (`CATALOGUE_OPEN_DELAY_MS`,
+`CATALOGUE_CLOSE_DELAY_MS`) are shared. The site supplies only what an item
+looks like:
+
+```tsx
+import {CatalogueFilterBar, CatalogueGrid} from '@kingdom-community/community-site-kit';
+
+<CatalogueGrid
+    items={shown}
+    heading="Projects"                     // visually hidden h2
+    sectionId="projects"
+    renderIcon={(p) => <Avatar src={p.icon} variant="rounded" sx={{width: '100%', height: '100%'}}/>}
+    renderDetails={(p, {titleId}) => <ProjectDetails project={p} titleId={titleId}/>}
+    // Optional: tiles become links to each item's page. A click follows the
+    // link; a tap on a touch screen opens the sheet instead.
+    getHref={(p) => `/projects/${p.id}`}
+    toolbar={
+        <CatalogueFilterBar
+            items={all}
+            shownCount={shown.length}
+            noun="projects"
+            facets={[{facet: facets[0], display: 'chips'}, {facet: facets[1], display: 'menu'}]}
+            query={query}
+            onQueryChange={setQuery}
+            sortOptions={sorts}
+            sortKey={sortKey}
+            onSortChange={setSortKey}
+        />
+    }
+    empty={<Button onClick={() => setQuery({})}>Clear filters</Button>}
+/>
+```
+
+`CatalogueFilterBar` folds search, sort and facet filters behind one "Search &
+filter" button, unfolds by itself while a filter is active, and says "Showing N
+of M". The page owns the query and sort state and runs `filterCatalogue` and
+`sortCatalogue` itself. Put the item's title element on `titleId`, which names
+the panel and the sheet.
+
 ## Configuration
 
 The kit reads exactly one environment variable, and only through `siteBaseUrl()`:
@@ -355,7 +399,8 @@ Everything else is a prop.
 
 **Components** — `ColorModeProvider`, `ColorModeToggle`, `ColorModeToggleSwitch`,
 `createColorModeToggleSwitch`, `TopBar`, `BottomBar`, `ErrorPage`,
-`UnavailablePanel`, `SkipLink`, `NextLinkComposed`, `createSeo`.
+`UnavailablePanel`, `SkipLink`, `NextLinkComposed`, `createSeo`, `CatalogueGrid`,
+`CatalogueFilterBar`.
 
 **Utilities** — `resolveInitialColorMode`, `readStoredColorMode`,
 `storeColorMode`, `applyColorModeToDocument`, `colorModeBootstrapScript`,

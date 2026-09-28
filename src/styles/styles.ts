@@ -224,3 +224,158 @@ export const panelStyle = (theme: Theme) => ({
     flexDirection: 'column',
     gap: theme.spacing(1)
 });
+
+// --- Catalogue icon grid -----------------------------------------------------
+// The icon-grid home page shared by the sites: bare tiles, no cards or visible
+// headings, details in a panel under a tile (desktop) or a bottom sheet (touch).
+// Taken from the most-fixed of the three copies it replaces; each comment
+// below records the bug its rule exists for.
+
+// Edge of a tile's icon in pixels, per breakpoint. A site's icon fills this box.
+export const CATALOGUE_ICON_SIZE = {xs: 56, sm: 64};
+
+// Hides content visually while keeping it in the accessibility tree — the
+// grid's section heading, which a screen reader needs and the page does not.
+// Pixel values are strings on purpose: in `sx` a bare 1 means 100% for width
+// and height, and a bare -1 means one negative spacing unit for margin.
+export const visuallyHiddenStyle = {
+    position: 'absolute',
+    width: '1px',
+    height: '1px',
+    padding: 0,
+    margin: '-1px',
+    overflow: 'hidden',
+    clip: 'rect(0 0 0 0)',
+    whiteSpace: 'nowrap',
+    border: 0
+};
+
+// auto-fill packs as many columns as fit, so the grid needs no breakpoint table.
+export const catalogueGridStyle = {
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
+    display: 'grid',
+    gridTemplateColumns: {
+        xs: 'repeat(auto-fill, minmax(76px, 1fr))',
+        sm: 'repeat(auto-fill, minmax(96px, 1fr))'
+    },
+    gap: {xs: 2, sm: 3}
+};
+
+// Anchor for a tile's panel: the Popper renders in place (disablePortal), so it
+// positions against this box.
+export const catalogueTileWrapperStyle = {
+    position: 'relative',
+    display: 'flex',
+    justifyContent: 'center',
+    minWidth: 0
+};
+
+// The tile — a bare button or link holding the icon and a caption. Hover, focus
+// and an open panel (data-open) grow the icon slightly and lift the caption to full
+// contrast; reduced motion keeps the colour change and drops the scale.
+export const catalogueTileStyle = (theme: Theme) => ({
+    all: 'unset',
+    boxSizing: 'border-box',
+    cursor: 'pointer',
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    padding: theme.spacing(0.5),
+    borderRadius: '14px',
+    '& .catalogue-tile-icon': {
+        transition: 'transform 0.15s ease'
+    },
+    '& .catalogue-tile-caption': {
+        color: theme.palette.text.secondary,
+        transition: 'color 0.15s ease'
+    },
+    '&:hover .catalogue-tile-icon, &:focus-visible .catalogue-tile-icon, &[data-open="true"] .catalogue-tile-icon': {
+        transform: 'scale(1.06)'
+    },
+    '&:hover .catalogue-tile-caption, &:focus-visible .catalogue-tile-caption, &[data-open="true"] .catalogue-tile-caption': {
+        color: theme.palette.text.primary
+    },
+    '&:focus-visible': {
+        outline: `2px solid ${theme.palette.primary.main}`,
+        outlineOffset: '2px'
+    },
+    [REDUCED_MOTION_QUERY]: {
+        '& .catalogue-tile-icon, & .catalogue-tile-caption': {transition: 'none'},
+        '&:hover .catalogue-tile-icon, &:focus-visible .catalogue-tile-icon, &[data-open="true"] .catalogue-tile-icon': {
+            transform: 'none'
+        }
+    }
+});
+
+// The box a site's icon is drawn into.
+export const catalogueTileIconStyle = {
+    display: 'flex',
+    width: CATALOGUE_ICON_SIZE,
+    height: CATALOGUE_ICON_SIZE,
+    borderRadius: '14px',
+    flexShrink: 0
+};
+
+// One line, ellipsized, so a long title never makes its row taller; the full
+// title is in the panel. On a phone one line cut most titles to a stub, so
+// there it wraps to two before clamping.
+export const catalogueTileCaptionStyle = {
+    fontSize: '0.75rem',
+    lineHeight: 1.3,
+    textAlign: 'center',
+    width: '100%',
+    overflow: 'hidden',
+    whiteSpace: {xs: 'normal', sm: 'nowrap'},
+    textOverflow: {xs: 'clip', sm: 'ellipsis'},
+    display: {xs: '-webkit-box', sm: 'block'},
+    WebkitLineClamp: {xs: 2, sm: 'unset'},
+    WebkitBoxOrient: 'vertical',
+    overflowWrap: 'anywhere'
+};
+
+// The width sits on the Popper, not the Paper: rendered in place inside a
+// narrow grid cell, an unsized Popper shrinks to the cell, Popper.js measures
+// that instead of the panel, and its overflow correction never fires — the
+// panel ran off the right of a phone screen.
+export const cataloguePopperStyle = {
+    width: 320,
+    maxWidth: 'calc(100vw - 32px)',
+    zIndex: 1500
+};
+
+export const cataloguePanelStyle = {
+    padding: 2
+};
+
+// Full width, rounded top, capped so a long description scrolls rather than
+// covering the page, and padded clear of the home indicator on notched phones.
+export const catalogueSheetPaperStyle = {
+    position: 'fixed',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    maxHeight: '80vh',
+    overflowY: 'auto',
+    px: 2,
+    pt: 1.5,
+    pb: 'calc(16px + env(safe-area-inset-bottom))'
+};
+
+// The grab handle: the cue that the sheet swipes down.
+export const catalogueSheetHandleStyle = {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    bgcolor: 'divider',
+    mx: 'auto',
+    mb: 1.5
+};
+
+export const catalogueSheetCloseStyle = {
+    position: 'absolute',
+    top: 8,
+    right: 8
+};
