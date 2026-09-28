@@ -2,6 +2,12 @@ import {describe, expect, it} from 'vitest';
 import {createTheme} from '@mui/material/styles';
 
 import {
+    CATALOGUE_ICON_SIZE,
+    catalogueGridStyle,
+    catalogueTileCaptionStyle,
+    catalogueTileIconStyle,
+    catalogueTileStyle,
+    visuallyHiddenStyle,
     appBarStyle,
     bottomAppBarStyle,
     brandNameStyle,
@@ -226,5 +232,43 @@ describe('the spacing factories', () => {
         expect(panelStyle(light).height).toBe('100%');
         expect(panelStyle(light).display).toBe('flex');
         expect(panelStyle(light).flexDirection).toBe('column');
+    });
+});
+
+describe('catalogue grid styles', () => {
+    it('packs as many columns as fit rather than using a breakpoint table', () => {
+        expect(catalogueGridStyle.display).toBe('grid');
+        expect(catalogueGridStyle.gridTemplateColumns.xs).toBe('repeat(auto-fill, minmax(76px, 1fr))');
+        expect(catalogueGridStyle.gridTemplateColumns.sm).toBe('repeat(auto-fill, minmax(96px, 1fr))');
+    });
+
+    it('sizes the icon box from the shared icon size', () => {
+        expect(catalogueTileIconStyle.width).toBe(CATALOGUE_ICON_SIZE);
+        expect(catalogueTileIconStyle.height).toBe(CATALOGUE_ICON_SIZE);
+        expect(CATALOGUE_ICON_SIZE).toEqual({xs: 56, sm: 64});
+    });
+
+    it('keeps a caption to one ellipsized line from sm up, and two clamped lines on a phone', () => {
+        expect(catalogueTileCaptionStyle).toMatchObject({
+            overflow: 'hidden',
+            whiteSpace: {xs: 'normal', sm: 'nowrap'},
+            textOverflow: {xs: 'clip', sm: 'ellipsis'},
+            display: {xs: '-webkit-box', sm: 'block'},
+            WebkitLineClamp: {xs: 2, sm: 'unset'}
+        });
+    });
+
+    it('drops the hover scale for users who ask for reduced motion', () => {
+        const style = catalogueTileStyle(createTheme()) as Record<string, unknown>;
+        const reduced = style['@media (prefers-reduced-motion: reduce)'] as Record<string, Record<string, string>>;
+        const scaled = Object.entries(style).find(([key]) => key.startsWith('&:hover .catalogue-tile-icon'));
+        expect(scaled?.[1]).toEqual({transform: 'scale(1.06)'});
+        expect(reduced[scaled![0]]).toEqual({transform: 'none'});
+    });
+});
+
+describe('visuallyHiddenStyle', () => {
+    it('uses pixel strings, since a bare 1 in sx means 100% and widened the page', () => {
+        expect(visuallyHiddenStyle).toMatchObject({width: '1px', height: '1px', margin: '-1px'});
     });
 });
