@@ -284,6 +284,63 @@ own chrome, saying plainly which capability is unavailable and that nothing the
 visitor did caused it — not a stack trace, not a spinner that never resolves, and
 never a message that blames the user.
 
+### 7. Catalogue search and filters
+
+For a home page that lists many things — plugins, projects, games — the
+`catalogue` entry point searches, filters and sorts whatever item shape the
+site already holds. It imports neither React nor MUI, so it can be loaded on its
+own:
+
+```ts
+import {
+    compareDottedVersionsDescending,
+    compareTitles,
+    descendingBy,
+    facetValues,
+    filterCatalogue,
+    isCatalogueQueryActive,
+    sortCatalogue,
+    type CatalogueFacet,
+    type CatalogueSortOption
+} from '@kingdom-community/community-site-kit/catalogue';
+
+const facets: CatalogueFacet<Project>[] = [
+    {key: 'category', label: 'Category', values: (p) => p.category},
+    // Several values per item are fine; so is none.
+    {key: 'tag', label: 'Tag', values: (p) => p.tags},
+    // Version numbers make poor search matches, so keep them out of the text search.
+    {key: 'version', label: 'Version', values: (p) => p.testedVersions,
+        searchable: false, compare: compareDottedVersionsDescending}
+];
+
+const sorts: CatalogueSortOption<Project>[] = [
+    {key: 'popular', label: 'Most popular', compare: descendingBy((p) => p.serverCount)},
+    {key: 'title', label: 'A–Z', compare: compareTitles}
+];
+
+const shown = filterCatalogue(sortCatalogue(projects, sorts[0]), facets, {
+    text: 'economy',
+    facets: {category: 'Minecraft'}
+});
+facetValues(projects, facets[1]);   // the tags in use, for the filter chips
+```
+
+The rules every site gets the same way:
+
+- The search text matches the title, the description and every `searchable`
+  facet value, ignoring case.
+- Every selected facet composes with the search. An item with **no** value for a
+  selected facet is excluded rather than assumed to match.
+- `facetValues` / `facetValueCounts` offer only values some item carries, so a
+  filter never offers a dead end.
+- `descendingBy` puts unknown numbers (null or undefined) after every known one,
+  including zero, and every sort helper breaks ties by title.
+- `relatedItems(item, all, facet)` lists the items sharing the most values of a
+  facet with the given one ("related plugins").
+
+The same functions are exported from the package root too, for a site that
+already imports the kit there.
+
 ## Configuration
 
 The kit reads exactly one environment variable, and only through `siteBaseUrl()`:
@@ -307,6 +364,11 @@ Everything else is a prop.
 `absoluteUrl`, `siteBaseUrl`, `socialImageUrl`, `DEFAULT_BASE_URL`,
 `sitemapPaths`, `collectionPaths`, `sitemapXml`, `robotsTxt`,
 `sitemapPathProblems`, `SITEMAP_ROUTE`, `DEFAULT_DISALLOWED_CRAWL_PATHS`.
+
+**Catalogue** (also at `@kingdom-community/community-site-kit/catalogue`) —
+`filterCatalogue`, `sortCatalogue`, `isCatalogueQueryActive`, `facetValues`,
+`facetValueCounts`, `relatedItems`, `compareTitles`, `descendingBy`,
+`compareDottedVersions`, `compareDottedVersionsDescending`.
 
 **Styles** — `import {styles} from '@kingdom-community/community-site-kit'` for
 the shared `sx` factories the chrome is built from (`pageStyle`,

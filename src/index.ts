@@ -58,4 +58,24 @@ export {
     type SitemapPathsOptions
 } from './utils/sitemap.js';
 
+export {
+    compareDottedVersions,
+    compareDottedVersionsDescending,
+    compareTitles,
+    descendingBy,
+    facetValueCounts,
+    facetValues,
+    filterCatalogue,
+    isCatalogueQueryActive,
+    relatedItems,
+    sortCatalogue,
+    type CatalogueFacet,
+    type CatalogueItem,
+    type CatalogueQuery,
+    type CatalogueSortOption,
+    type FacetSelection,
+    type FacetValue,
+    type FacetValueCount
+} from './utils/catalogue.js';
+
 export * as styles from './styles/styles.js';

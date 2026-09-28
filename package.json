@@ -7,6 +7,13 @@
   "type": "module",
   "main": "./dist/cjs/index.js",
   "types": "./dist/esm/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "catalogue": [
+        "./dist/esm/catalogue.d.ts"
+      ]
+    }
+  },
   "exports": {
     ".": {
       "import": {
@@ -16,6 +23,16 @@
       "require": {
         "types": "./dist/cjs/index.d.ts",
         "default": "./dist/cjs/index.js"
+      }
+    },
+    "./catalogue": {
+      "import": {
+        "types": "./dist/esm/catalogue.d.ts",
+        "default": "./dist/esm/catalogue.js"
+      },
+      "require": {
+        "types": "./dist/cjs/catalogue.d.ts",
+        "default": "./dist/cjs/catalogue.js"
       }
     },
     "./package.json": "./package.json"
@@ -45,7 +62,10 @@
     "seo",
     "sitemap",
     "robots-txt",
-    "navbar"
+    "navbar",
+    "catalogue",
+    "search",
+    "filter"
   ],
   "scripts": {
     "build": "npm run clean && tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && node scripts/finalize-cjs.mjs",
