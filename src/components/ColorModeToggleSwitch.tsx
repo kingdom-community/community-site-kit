@@ -1,6 +1,11 @@
-import {styled, Switch} from '@mui/material';
+// A namespace import, never named ones (`{Box}`) from @mui/material: Next's barrel
+// optimisation rewrites named MUI imports, and under this package's strict ESM
+// the rewrite binds the CommonJS module object instead of the component (#11).
+import * as Mui from '@mui/material';
 
 import {switchTrackStyle} from '../styles/styles.js';
+
+const {styled, Switch} = Mui;
 
 // A sun/moon toggle for the colour mode, styled as an iOS-shaped switch with the
 // icon drawn on the thumb.

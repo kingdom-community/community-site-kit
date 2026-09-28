@@ -1,5 +1,10 @@
 import React from 'react';
-import {Alert, AlertTitle, Typography} from '@mui/material';
+// A namespace import, never named ones (`{Box}`) from @mui/material: Next's barrel
+// optimisation rewrites named MUI imports, and under this package's strict ESM
+// the rewrite binds the CommonJS module object instead of the component (#11).
+import * as Mui from '@mui/material';
+
+const {Alert, AlertTitle, Typography} = Mui;
 
 // The panel a degraded path renders instead of an error.
 //

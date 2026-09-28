@@ -1,5 +1,8 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import {createTheme, CssBaseline, ThemeProvider, useTheme} from '@mui/material';
+// A namespace import, never named ones (`{Box}`) from @mui/material: Next's barrel
+// optimisation rewrites named MUI imports, and under this package's strict ESM
+// the rewrite binds the CommonJS module object instead of the component (#11).
+import * as Mui from '@mui/material';
 import type {Theme, ThemeOptions} from '@mui/material/styles';
 
 import {ColorModeContext} from '../utils/ColorModeContext.js';
@@ -13,7 +16,8 @@ import {
 } from '../utils/colorMode.js';
 import {ColorModeToggleSwitch} from './ColorModeToggleSwitch.js';
 import {toggleSwitchBoxStyle} from '../styles/styles.js';
-import {Box} from '@mui/material';
+
+const {createTheme, CssBaseline, ThemeProvider, useTheme, Box} = Mui;
 
 export interface ColorModeProviderProps {
     children?: React.ReactNode;

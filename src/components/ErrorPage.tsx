@@ -1,8 +1,13 @@
 import React from 'react';
-import {Box, Button, Container, Typography} from '@mui/material';
+// A namespace import, never named ones (`{Box}`) from @mui/material: Next's barrel
+// optimisation rewrites named MUI imports, and under this package's strict ESM
+// the rewrite binds the CommonJS module object instead of the component (#11).
+import * as Mui from '@mui/material';
 
 import {NextLinkComposed} from './NextLinkComposed.js';
 import {pageStyle, sectionHeaderStyle} from '../styles/styles.js';
+
+const {Box, Button, Container, Typography} = Mui;
 
 export interface ErrorPageProps {
     // The status code, shown large: "404", "500".

@@ -1,7 +1,12 @@
 import React from 'react';
-import {Box} from '@mui/material';
+// A namespace import, never named ones (`{Box}`) from @mui/material: Next's barrel
+// optimisation rewrites named MUI imports, and under this package's strict ESM
+// the rewrite binds the CommonJS module object instead of the component (#11).
+import * as Mui from '@mui/material';
 
 import {withoutTransition} from '../styles/styles.js';
+
+const {Box} = Mui;
 
 export interface SkipLinkProps {
     // The id of the page's main content element. Render `<main id="main">` (or

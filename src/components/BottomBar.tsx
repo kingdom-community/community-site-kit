@@ -1,4 +1,7 @@
-import {AppBar, Box, Button, Toolbar, Typography} from '@mui/material';
+// A namespace import, never named ones (`{Box}`) from @mui/material: Next's barrel
+// optimisation rewrites named MUI imports, and under this package's strict ESM
+// the rewrite binds the CommonJS module object instead of the component (#11).
+import * as Mui from '@mui/material';
 import React from 'react';
 
 import {ColorModeToggle} from './ColorModeProvider.js';
@@ -11,6 +14,8 @@ import {
     toolbarStyle,
     versionNumberStyle
 } from '../styles/styles.js';
+
+const {AppBar, Box, Button, Toolbar, Typography} = Mui;
 
 export interface FooterLink {
     href: string;
