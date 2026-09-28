@@ -243,6 +243,13 @@ const CatalogueTile = <T extends CatalogueGridItem>({
                         onClose={() => onClose(id)}
                         disableSwipeToOpen
                         disableDiscovery
+                        // Focus goes back to the tile once the sheet has slid
+                        // away. MUI's own restore returns it to whatever had focus
+                        // when the sheet opened, and a tap does not reliably focus
+                        // the button it lands on (Safari never does), which left
+                        // keyboard and screen-reader users at the top of the page.
+                        disableRestoreFocus
+                        SlideProps={{onExited: () => tileRef.current?.focus({preventScroll: true})}}
                         // Mounted on open: kept mounted, every item's details
                         // would sit hidden in the page, one sheet per tile.
                         ModalProps={{keepMounted: false}}

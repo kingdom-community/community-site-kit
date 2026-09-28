@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {act, cleanup, fireEvent, render, screen, within} from '@testing-library/react';
+import {act, cleanup, fireEvent, render, screen, waitFor, within} from '@testing-library/react';
 
 vi.mock('next/router', () => ({useRouter: () => ({pathname: '/', asPath: '/'})}));
 
@@ -151,6 +151,20 @@ describe('CatalogueGrid', () => {
             expect(within(sheet).getByText('Sheet link')).toBeTruthy();
             fireEvent.click(within(sheet).getByRole('button', {name: 'Close Roam'}));
             expect(screen.queryByRole('dialog', {name: 'Roam'})).toBeNull();
+        });
+
+        it('hands focus back to the tile once the sheet has closed, from the button or Escape', async () => {
+            grid();
+            const roam = () => screen.getAllByTestId('catalogue-tile').find((el) => el.textContent === 'Roam')!;
+            fireEvent.click(roam());
+            fireEvent.click(within(screen.getByRole('dialog', {name: 'Roam'})).getByRole('button', {name: 'Close Roam'}));
+            await waitFor(() => expect(document.activeElement).toBe(roam()));
+
+            act(() => (document.activeElement as HTMLElement).blur());
+            fireEvent.click(roam());
+            fireEvent.keyDown(screen.getByRole('dialog', {name: 'Roam'}), {key: 'Escape'});
+            await waitFor(() => expect(screen.queryByRole('dialog', {name: 'Roam'})).toBeNull());
+            await waitFor(() => expect(document.activeElement).toBe(roam()));
         });
 
         it('does not follow a link tile on tap, opening the sheet instead', () => {
