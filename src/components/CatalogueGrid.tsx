@@ -47,8 +47,14 @@ export interface CatalogueGridItem {
 export interface CatalogueDetailsContext {
     // Put this on the details' title, which names the panel or sheet around it.
     titleId: string;
+    // Put this on the details' description. With keepPanelsMounted, the tile's
+    // aria-describedby points at it.
+    descriptionId: string;
     // Whether the details are in the touch bottom sheet rather than the panel.
     inSheet: boolean;
+    // Closes the panel or sheet — for an action that changes what is behind
+    // it, such as a tag that filters the grid.
+    close: () => void;
 }
 
 export interface CatalogueGridProps<T extends CatalogueGridItem> {
@@ -72,6 +78,11 @@ export interface CatalogueGridProps<T extends CatalogueGridItem> {
     empty?: React.ReactNode;
     // Prefix for the element ids the grid mints; unique per grid on a page.
     idPrefix?: string;
+    // Keep every desktop panel mounted (hidden while closed) instead of
+    // mounting one on open. For details that hold state worth keeping between
+    // openings — a Like and its sign-in notice — and so each tile can be
+    // described by its item's description (aria-describedby) at all times.
+    keepPanelsMounted?: boolean;
     // Extra sx for the section.
     sx?: Mui.SxProps<Mui.Theme>;
 }
@@ -86,6 +97,7 @@ interface TileProps<T extends CatalogueGridItem> {
     renderDetails: CatalogueGridProps<T>['renderDetails'];
     href?: string;
     idPrefix: string;
+    keepMounted: boolean;
 }
 
 const CatalogueTile = <T extends CatalogueGridItem>({
@@ -97,7 +109,8 @@ const CatalogueTile = <T extends CatalogueGridItem>({
     renderIcon,
     renderDetails,
     href,
-    idPrefix
+    idPrefix,
+    keepMounted
 }: TileProps<T>): React.ReactElement => {
     const {id, title} = item;
     const tileRef = React.useRef<HTMLElement | null>(null);
@@ -122,6 +135,8 @@ const CatalogueTile = <T extends CatalogueGridItem>({
     }, [open]);
     const panelId = `${idPrefix}-panel-${id}`;
     const titleId = `${idPrefix}-title-${id}`;
+    const descriptionId = `${idPrefix}-description-${id}`;
+    const close = () => onClose(id);
 
     const clearTimer = () => {
         if (timer.current !== undefined) {
@@ -204,6 +219,9 @@ const CatalogueTile = <T extends CatalogueGridItem>({
         ref: setTile,
         'data-open': open,
         'data-testid': 'catalogue-tile',
+        // A closed, kept-mounted panel is display:none — out of the
+        // accessibility tree, while its description still names the tile's.
+        'aria-describedby': keepMounted && !touch ? descriptionId : undefined,
         sx: catalogueTileStyle,
         onPointerDown: () => {
             skipFocusOpen.current = true;
@@ -272,7 +290,7 @@ const CatalogueTile = <T extends CatalogueGridItem>({
                         </IconButton>
                         {/* The title kept clear of the close button in the corner. */}
                         <Box sx={{'& h3': {pr: 5}}}>
-                            {renderDetails(item, {titleId, inSheet: true})}
+                            {renderDetails(item, {titleId, descriptionId, inSheet: true, close})}
                         </Box>
                     </SwipeableDrawer>
                 ) : (
@@ -284,6 +302,7 @@ const CatalogueTile = <T extends CatalogueGridItem>({
                         // the icon into the panel's actions, and the pointer moving
                         // onto the panel is still inside the wrapper.
                         disablePortal
+                        keepMounted={keepMounted}
                         modifiers={[
                             {name: 'flip', enabled: true},
                             // Bounded by the grid rather than the viewport: on a
@@ -298,7 +317,7 @@ const CatalogueTile = <T extends CatalogueGridItem>({
                         sx={cataloguePopperStyle}
                     >
                         <Paper id={panelId} role="group" aria-labelledby={titleId} elevation={8} sx={cataloguePanelStyle}>
-                            {renderDetails(item, {titleId, inSheet: false})}
+                            {renderDetails(item, {titleId, descriptionId, inSheet: false, close})}
                         </Paper>
                     </Popper>
                 )}
@@ -317,6 +336,7 @@ export const CatalogueGrid = <T extends CatalogueGridItem>({
     toolbar,
     empty,
     idPrefix = 'catalogue',
+    keepPanelsMounted = false,
     sx
 }: CatalogueGridProps<T>): React.ReactElement => {
     const [openId, setOpenId] = React.useState<string | null>(null);
@@ -350,6 +370,7 @@ export const CatalogueGrid = <T extends CatalogueGridItem>({
                             renderDetails={renderDetails}
                             href={getHref?.(item)}
                             idPrefix={idPrefix}
+                            keepMounted={keepPanelsMounted}
                         />
                     ))}
                 </Box>

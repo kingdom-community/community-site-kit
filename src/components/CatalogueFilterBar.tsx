@@ -46,6 +46,9 @@ export interface CatalogueFilterBarFacet<T> {
     facet: CatalogueFacet<T>;
     // Chips suit a handful of values; a menu keeps a long list off the page.
     display: 'chips' | 'menu';
+    // The "no filter" choice. Defaults to "Any <label in lower case>", which
+    // is wrong for a label with a proper noun in it ("Minecraft version").
+    anyLabel?: string;
 }
 
 export interface CatalogueFilterBarProps<T> {
@@ -155,10 +158,11 @@ export const CatalogueFilterBar = <T, >({
                 </Box>
 
                 <Stack spacing={1.5} sx={{alignItems: 'center', mb: 3}}>
-                    {facets.map(({facet, display}) => {
+                    {facets.map(({facet, display, anyLabel}) => {
                         const values = facetValues(items, facet);
                         if (values.length === 0) return null;
                         const current = selected(facet.key);
+                        const any = anyLabel ?? `Any ${facet.label.toLowerCase()}`;
                         if (display === 'menu') {
                             const labelId = `${idPrefix}-${facet.key}-label`;
                             return (
@@ -171,7 +175,7 @@ export const CatalogueFilterBar = <T, >({
                                         onChange={(e) => select(facet.key, e.target.value === '' ? null : String(e.target.value))}
                                         data-testid={`facet-${facet.key}`}
                                     >
-                                        <MenuItem value="">Any {facet.label.toLowerCase()}</MenuItem>
+                                        <MenuItem value="">{any}</MenuItem>
                                         {values.map((value) => (
                                             <MenuItem key={value} value={value}>{value}</MenuItem>
                                         ))}
@@ -189,7 +193,7 @@ export const CatalogueFilterBar = <T, >({
                                 aria-label={`Filter by ${facet.label.toLowerCase()}`}
                             >
                                 <Chip
-                                    label={`Any ${facet.label.toLowerCase()}`}
+                                    label={any}
                                     size="small"
                                     clickable
                                     color={current === null ? 'primary' : 'default'}

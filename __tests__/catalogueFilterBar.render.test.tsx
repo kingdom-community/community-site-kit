@@ -33,7 +33,7 @@ const SORTS: CatalogueSortOption<Item>[] = [
 ];
 
 // A page as a site would write one: it owns the state and runs the helpers.
-const Page: React.FC<{initial?: CatalogueQuery}> = ({initial = {}}) => {
+const Page: React.FC<{initial?: CatalogueQuery; anyLabel?: string}> = ({initial = {}, anyLabel}) => {
     const [query, setQuery] = React.useState<CatalogueQuery>(initial);
     const [sortKey, setSortKey] = React.useState('title');
     const shown = filterCatalogue(ITEMS, [category, tech], query);
@@ -43,7 +43,7 @@ const Page: React.FC<{initial?: CatalogueQuery}> = ({initial = {}}) => {
                 items={ITEMS}
                 shownCount={shown.length}
                 noun="projects"
-                facets={[{facet: category, display: 'chips'}, {facet: tech, display: 'menu'}]}
+                facets={[{facet: category, display: 'chips'}, {facet: tech, display: 'menu', anyLabel}]}
                 query={query}
                 onQueryChange={setQuery}
                 sortOptions={SORTS}
@@ -112,5 +112,12 @@ describe('CatalogueFilterBar', () => {
         fireEvent.click(toggle());
         fireEvent.click(screen.getByRole('button', {name: 'Z–A'}));
         expect(screen.getByTestId('sort').textContent).toBe('reverse');
+    });
+
+    it('uses the facet\'s own "any" label when given, rather than lower-casing its name', () => {
+        render(<Page anyLabel="Any Minecraft version"/>);
+        fireEvent.click(toggle());
+        fireEvent.mouseDown(within(screen.getByTestId('facet-tech')).getByRole('combobox'));
+        expect(within(screen.getByRole('listbox')).getAllByRole('option')[0]!.textContent).toBe('Any Minecraft version');
     });
 });
