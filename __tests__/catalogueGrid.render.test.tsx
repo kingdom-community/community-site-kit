@@ -7,7 +7,8 @@ import {
     CATALOGUE_CLOSE_DELAY_MS,
     CATALOGUE_OPEN_DELAY_MS,
     CatalogueGrid,
-    TOUCH_ONLY_QUERY
+    TOUCH_ONLY_QUERY,
+    type CatalogueDetailsContext
 } from '../src/components/CatalogueGrid.js';
 
 interface Item {
@@ -21,11 +22,12 @@ const ITEMS: Item[] = [
     {id: 'roam', title: 'Roam', description: 'A survival game.'}
 ];
 
-const renderDetails = (item: Item, {titleId, inSheet}: {titleId: string; inSheet: boolean}) => (
+const renderDetails = (item: Item, {titleId, descriptionId, inSheet, close}: CatalogueDetailsContext) => (
     <>
         <h3 id={titleId}>{item.title}</h3>
-        <p>{item.description}</p>
+        <p id={descriptionId}>{item.description}</p>
         <a href={`https://example.test/${item.id}`}>{inSheet ? 'Sheet link' : 'Panel link'}</a>
+        <button type="button" onClick={close}>Done with {item.title}</button>
     </>
 );
 
@@ -137,6 +139,32 @@ describe('CatalogueGrid', () => {
         expect(mf.getAttribute('href')).toBe('/resources/mf');
         fireEvent.focus(mf);
         expect(screen.getByRole('group', {name: 'Medieval Factions'})).toBeTruthy();
+    });
+
+    it('mounts a panel only while open by default, and describes no tile', () => {
+        grid();
+        expect(screen.queryByText('Nations and war.')).toBeNull();
+        expect(tile('Medieval Factions').hasAttribute('aria-describedby')).toBe(false);
+    });
+
+    it('with keepPanelsMounted, keeps every panel mounted and describes each tile by its description', () => {
+        grid({keepPanelsMounted: true});
+        const mf = tile('Medieval Factions');
+        const description = document.getElementById(mf.getAttribute('aria-describedby')!);
+        expect(description?.textContent).toBe('Nations and war.');
+        expect(screen.queryByRole('group', {name: 'Medieval Factions'})).toBeNull();
+        fireEvent.focus(mf);
+        expect(screen.getByRole('group', {name: 'Medieval Factions'})).toBeTruthy();
+        fireEvent.blur(mf);
+        expect(screen.queryByRole('group', {name: 'Medieval Factions'})).toBeNull();
+        expect(screen.getByText('Nations and war.', {selector: 'p'})).toBeTruthy();
+    });
+
+    it('lets the details close their own panel', () => {
+        grid();
+        fireEvent.focus(tile('Roam'));
+        fireEvent.click(screen.getByRole('button', {name: 'Done with Roam'}));
+        expect(screen.queryByRole('group', {name: 'Roam'})).toBeNull();
     });
 
     describe('on a touch-only screen', () => {
