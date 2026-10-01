@@ -384,8 +384,9 @@ import {CatalogueFilterBar, CatalogueGrid} from '@kingdom-community/community-si
 Two options exist for richer details. `keepPanelsMounted` keeps every desktop panel mounted while closed, for
 details holding state worth keeping (a Like), and describes each tile by its item's description: put
 `ctx.descriptionId` on it. `ctx.close()` lets the details close their own panel or sheet — for a tag that
-filters the grid behind the sheet, say. A filter-bar facet entry's `anyLabel` (beside `facet` and `display`) overrides the default "Any <label>" choice where
-lower-casing the label is wrong ("Any version" for "Minecraft version").
+filters the grid behind the sheet, say. A filter-bar facet entry's `anyLabel` (beside `facet` and `display`)
+overrides the default "Any <label>" choice where lower-casing the label is wrong ("Any version" for
+"Minecraft version").
 
 `CatalogueFilterBar` folds search, sort and facet filters behind one "Search &
 filter" button, unfolds by itself while a filter is active, and says "Showing N
