@@ -3,8 +3,9 @@
 Shared [Next.js](https://nextjs.org/) + [MUI](https://mui.com/) building blocks
 for a community website: an SSR-safe colour-mode provider and toggle, prop-driven
 top and bottom navigation bars, a `next/link` bridge for MUI's `component` prop,
-per-page SEO metadata, a generic "temporarily unavailable" panel, and pure
-builders for `sitemap.xml` and `robots.txt`.
+per-page SEO metadata, a generic "temporarily unavailable" panel, pure
+builders for `sitemap.xml` and `robots.txt`, and catalogue search, filter and
+sort helpers with an icon grid and filter bar to show the result.
 
 Nothing here knows what your community is about. You pass in your brand, your nav
 items and your links; the kit supplies the chrome, the accessibility details and
@@ -348,7 +349,8 @@ panel under a tile on hover, keyboard focus or click, and a bottom sheet on tap
 where the device cannot hover. Only one panel is open at a time, Escape closes
 it and returns focus to the tile, and the timings (`CATALOGUE_OPEN_DELAY_MS`,
 `CATALOGUE_CLOSE_DELAY_MS`) are shared. The site supplies only what an item
-looks like:
+looks like, and puts the item's title element on `ctx.titleId`, which names the
+panel and the sheet:
 
 ```tsx
 import {CatalogueFilterBar, CatalogueGrid} from '@kingdom-community/community-site-kit';
@@ -382,14 +384,14 @@ import {CatalogueFilterBar, CatalogueGrid} from '@kingdom-community/community-si
 Two options exist for richer details. `keepPanelsMounted` keeps every desktop panel mounted while closed, for
 details holding state worth keeping (a Like), and describes each tile by its item's description: put
 `ctx.descriptionId` on it. `ctx.close()` lets the details close their own panel or sheet — for a tag that
-filters the grid behind the sheet, say. A facet's `anyLabel` overrides the default "Any <label>" choice where
-lower-casing the label is wrong ("Any version" for "Minecraft version").
+filters the grid behind the sheet, say. A filter-bar facet entry's `anyLabel` (beside `facet` and `display`)
+overrides the default "Any <label>" choice where lower-casing the label is wrong ("Any version" for
+"Minecraft version").
 
 `CatalogueFilterBar` folds search, sort and facet filters behind one "Search &
 filter" button, unfolds by itself while a filter is active, and says "Showing N
 of M". The page owns the query and sort state and runs `filterCatalogue` and
-`sortCatalogue` itself. Put the item's title element on `titleId`, which names
-the panel and the sheet.
+`sortCatalogue` itself.
 
 ## Configuration
 
@@ -414,7 +416,9 @@ Everything else is a prop.
 `DEFAULT_COLOR_MODE_STORAGE_KEY`, `ColorModeContext`, `isActiveNavLink`, `isExternalNavLink`, `canonicalPath`,
 `absoluteUrl`, `siteBaseUrl`, `socialImageUrl`, `DEFAULT_BASE_URL`,
 `sitemapPaths`, `collectionPaths`, `sitemapXml`, `robotsTxt`,
-`sitemapPathProblems`, `SITEMAP_ROUTE`, `DEFAULT_DISALLOWED_CRAWL_PATHS`.
+`sitemapPathProblems`, `SITEMAP_ROUTE`, `DEFAULT_DISALLOWED_CRAWL_PATHS`,
+`CATALOGUE_OPEN_DELAY_MS`, `CATALOGUE_CLOSE_DELAY_MS`, `TOUCH_ONLY_QUERY` (the
+media query `CatalogueGrid` uses to choose the bottom sheet over the panel).
 
 **Catalogue** (also at `@kingdom-community/community-site-kit/catalogue`) —
 `filterCatalogue`, `sortCatalogue`, `isCatalogueQueryActive`, `facetValues`,
