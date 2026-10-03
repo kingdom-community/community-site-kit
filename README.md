@@ -20,9 +20,11 @@ npm install @kingdom-community/community-site-kit
 
 `react` and `react-dom` (18+), `next` (13+) and `@mui/material` (5+) are peer
 dependencies, so the kit uses the copies your site already has.
-`@mui/icons-material` is declared an optional peer, but `TopBar` imports
-`Menu`, `ExpandMore` and `OpenInNew` from it directly, so install it too unless
-you never import the package's entry point.
+`@mui/icons-material` is declared an optional peer, but three components import
+icons from it directly — `TopBar` (`Menu`, `ExpandMore`, `OpenInNew`),
+`CatalogueGrid` (`Close`) and `CatalogueFilterBar` (`Search`, `Tune`, `Clear`) —
+so install it too unless you never import the package's entry point. The
+`catalogue` entry point imports no icons.
 
 ```bash
 npm install react react-dom next @mui/material @mui/icons-material @emotion/react @emotion/styled
