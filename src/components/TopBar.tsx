@@ -292,5 +292,3 @@ export const TopBar: React.FC<TopBarProps> = ({
         </AppBar>
     );
 };
-
-export default TopBar;
