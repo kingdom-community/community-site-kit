@@ -75,5 +75,3 @@ export const ErrorPage: React.FC<ErrorPageProps> = ({
         {bottomBar}
     </Box>
 );
-
-export default ErrorPage;

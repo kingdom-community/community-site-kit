@@ -85,5 +85,3 @@ export const BottomBar: React.FC<BottomBarProps> = ({
         </Toolbar>
     </AppBar>
 );
-
-export default BottomBar;

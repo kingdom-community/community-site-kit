@@ -32,5 +32,3 @@ export const UnavailablePanel: React.FC<UnavailablePanelProps> = ({title, childr
         </Typography>
     </Alert>
 );
-
-export default UnavailablePanel;
