@@ -47,6 +47,17 @@ describe('BottomBar', () => {
         expect(screen.getByRole('contentinfo')).toBeTruthy();
     });
 
+    // The name has to sit on the landmark: a label on the generic div inside it
+    // is never announced.
+    it('names the footer landmark, by default and at a caller-chosen label', () => {
+        const {unmount} = render(<BottomBar version="1.0.0"/>);
+        expect(screen.getByRole('contentinfo', {name: 'Footer'})).toBeTruthy();
+        unmount();
+
+        render(<BottomBar version="1.0.0" ariaLabel="Site footer"/>);
+        expect(screen.getByRole('contentinfo', {name: 'Site footer'})).toBeTruthy();
+    });
+
     it('carries the colour-mode switch by default, and omits it on request', () => {
         const {unmount} = render(<BottomBar version="1.0.0"/>);
         expect(screen.getByRole('checkbox', {name: 'Toggle dark mode'})).toBeTruthy();

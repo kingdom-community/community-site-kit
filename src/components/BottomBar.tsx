@@ -64,8 +64,10 @@ export const BottomBar: React.FC<BottomBarProps> = ({
     colorModeToggle = true,
     ariaLabel = 'Footer'
 }) => (
-    <AppBar position="static" component="footer" sx={bottomAppBarStyle}>
-        <Toolbar aria-label={ariaLabel} sx={toolbarStyle}>
+    // The label goes on the footer landmark itself. The Toolbar inside it is a
+    // plain div, and a name on a generic element is ignored by assistive tech.
+    <AppBar position="static" component="footer" aria-label={ariaLabel} sx={bottomAppBarStyle}>
+        <Toolbar sx={toolbarStyle}>
             <Box sx={flexContainerStyle}>
                 <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
                     {version ? (
