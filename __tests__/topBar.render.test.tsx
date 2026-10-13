@@ -109,6 +109,25 @@ describe('TopBar', () => {
         expect(contact.getAttribute('target')).toBeNull();
     });
 
+    // Above md the dropdown is the only place a menu's links appear, so the
+    // "you are here" indication has to live there too.
+    it('marks the current page inside a dropdown, and never an off-site item', async () => {
+        const user = userEvent.setup();
+        render(<TopBar brand="Ember Hollow" menus={MENUS} pathname="/contact"/>);
+        await user.click(screen.getByRole('button', {name: 'Community'}));
+
+        expect(screen.getByRole('menuitem', {name: 'Contact'}).getAttribute('aria-current')).toBe('page');
+        expect(screen.getByRole('menuitem', {name: /Chat/}).getAttribute('aria-current')).toBeNull();
+    });
+
+    it('marks no dropdown item when the current page is elsewhere', async () => {
+        const user = userEvent.setup();
+        render(<TopBar brand="Ember Hollow" menus={MENUS} pathname="/news"/>);
+        await user.click(screen.getByRole('button', {name: 'Community'}));
+
+        expect(screen.getByRole('menuitem', {name: 'Contact'}).getAttribute('aria-current')).toBeNull();
+    });
+
     it('renders whatever is passed as actions', () => {
         render(<TopBar brand="Ember Hollow" actions={<button type="button">Sign in</button>}/>);
         expect(screen.getByRole('button', {name: 'Sign in'})).toBeTruthy();
