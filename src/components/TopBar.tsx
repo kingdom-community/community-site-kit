@@ -78,8 +78,10 @@ const NavButton: React.FC<{href: string; active?: boolean; children: React.React
 };
 
 // Desktop-only dropdown, so a group of related destinations costs one slot in
-// the always-visible nav rather than one slot each.
-const NavDropdown: React.FC<{menu: NavMenu}> = ({menu}) => {
+// the always-visible nav rather than one slot each. Its in-site entries say
+// "you are here" the same way `NavButton` does; without that, a page reached
+// through a menu has no current-page indication anywhere above `md`.
+const NavDropdown: React.FC<{menu: NavMenu; pathname: string}> = ({menu, pathname}) => {
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
     const open = !!anchorEl;
     return (
@@ -101,6 +103,7 @@ const NavDropdown: React.FC<{menu: NavMenu}> = ({menu}) => {
             <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
                 {menu.links.map((link) => {
                     const isExternal = isExternalNavLink(link.href);
+                    const active = isActiveNavLink(pathname, link.href);
                     return (
                         <MenuItem
                             key={link.href}
@@ -108,6 +111,8 @@ const NavDropdown: React.FC<{menu: NavMenu}> = ({menu}) => {
                                 ? {component: 'a' as const, href: link.href, target: '_blank', rel: 'noopener noreferrer'}
                                 : {component: NextLinkComposed, to: link.href})}
                             onClick={() => setAnchorEl(null)}
+                            aria-current={active ? 'page' : undefined}
+                            sx={active ? {fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: '6px'} : undefined}
                         >
                             {link.label}
                             {isExternal ? <OpenInNewIcon fontSize="small" sx={{marginLeft: 1}}/> : null}
@@ -261,7 +266,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                             </NavButton>
                         ))}
                         {menus.map((menu) => (
-                            <NavDropdown key={menu.label} menu={menu}/>
+                            <NavDropdown key={menu.label} menu={menu} pathname={currentPath}/>
                         ))}
                     </Box>
                 </Box>
