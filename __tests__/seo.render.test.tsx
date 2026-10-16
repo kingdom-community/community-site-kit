@@ -87,4 +87,60 @@ describe('createSeo', () => {
         expect(container.querySelector('meta[property="og:image"]')).toBeNull();
         expect(meta(container, 'meta[name="twitter:card"]')).toBe('summary');
     });
+
+    it('joins the page title and site name with the configured separator', () => {
+        const Piped = createSeo({
+            siteName: 'Ember Hollow',
+            description: 'x',
+            baseUrl: 'https://emberhollow.example',
+            titleSeparator: ' | '
+        });
+        const {container} = render(<Piped title="News"/>);
+        expect(container.querySelector('title')?.textContent).toBe('News | Ember Hollow');
+        expect(meta(container, 'meta[name="twitter:title"]')).toBe('News | Ember Hollow');
+    });
+
+    it('describes a page as a website unless it says otherwise', () => {
+        const {container} = render(<Seo/>);
+        expect(meta(container, 'meta[property="og:type"]')).toBe('website');
+        cleanup();
+        const {container: article} = render(<Seo type="article"/>);
+        expect(meta(article, 'meta[property="og:type"]')).toBe('article');
+    });
+
+    // A page resolving a dynamic segment on the client knows its concrete path
+    // before the router's asPath does.
+    it('prefers an explicit path over the current route', () => {
+        router.asPath = '/news/[slug]';
+        const {container} = render(<Seo path="/news/wipe-day#comments"/>);
+        expect(container.querySelector('link[rel="canonical"]')?.getAttribute('href'))
+            .toBe('https://emberhollow.example/news/wipe-day');
+    });
+
+    it('carries a page description into every description tag', () => {
+        const {container} = render(<Seo description="What changed while you were away."/>);
+        expect(meta(container, 'meta[name="description"]')).toBe('What changed while you were away.');
+        expect(meta(container, 'meta[property="og:description"]')).toBe('What changed while you were away.');
+        expect(meta(container, 'meta[name="twitter:description"]')).toBe('What changed while you were away.');
+    });
+
+    it('describes the site card with its own alt text', () => {
+        const {container} = render(<Seo/>);
+        expect(meta(container, 'meta[property="og:image:alt"]')).toBe('Ember Hollow');
+        expect(meta(container, 'meta[name="twitter:image:alt"]')).toBe('Ember Hollow');
+    });
+
+    // The site card's alt text describes the site card, not whatever a page
+    // swapped in for it.
+    it('does not lend the site card alt text to a page image', () => {
+        const {container} = render(<Seo image="/news/wipe-day.png"/>);
+        expect(meta(container, 'meta[property="og:image"]')).toBe('https://emberhollow.example/news/wipe-day.png');
+        expect(container.querySelector('meta[property="og:image:alt"]')).toBeNull();
+        expect(container.querySelector('meta[name="twitter:image:alt"]')).toBeNull();
+    });
+
+    it('renders extra tags inside the same head block', () => {
+        const {container} = render(<Seo><meta name="robots" content="noindex"/></Seo>);
+        expect(meta(container, 'meta[name="robots"]')).toBe('noindex');
+    });
 });
