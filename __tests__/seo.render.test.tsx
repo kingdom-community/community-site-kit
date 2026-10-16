@@ -134,6 +134,7 @@ describe('createSeo', () => {
     // swapped in for it.
     it('does not lend the site card alt text to a page image', () => {
         const {container} = render(<Seo image="/news/wipe-day.png"/>);
+        expect(meta(container, 'meta[property="og:image"]')).toBe('https://emberhollow.example/news/wipe-day.png');
         expect(container.querySelector('meta[property="og:image:alt"]')).toBeNull();
         expect(container.querySelector('meta[name="twitter:image:alt"]')).toBeNull();
     });
