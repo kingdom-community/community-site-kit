@@ -149,9 +149,9 @@ export const SiteBottomBar = () => (
 Any link whose `href` starts with `http` is treated as off-site: it opens in a
 new tab with `rel="noopener noreferrer"`, and in the top bar it also gets an
 external-link icon. In-site links navigate client-side through `next/link`. In
-the top bar, the link whose `href` equals the router's current `pathname`
-exactly (so a `/news` link is not marked on `/news/[slug]`) carries
-`aria-current="page"`. In the inline row and its dropdown menus it is also set
+the top bar, the link whose `href` equals the current `pathname` exactly (the
+router's, unless you pass a `pathname` prop; so a `/news` link is not marked on
+`/news/[slug]`) carries `aria-current="page"`. In the inline row and its dropdown menus it is also set
 in bold and underlined, never marked by colour alone; in the drawer its
 visible mark is MUI's selected-item background. The bottom bar marks no link.
 
