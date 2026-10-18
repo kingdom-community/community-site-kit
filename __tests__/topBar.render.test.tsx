@@ -25,6 +25,21 @@ const MENUS = [
 
 afterEach(cleanup);
 
+// The drawer's label styling is a nested selector under a generated class,
+// which jsdom does not resolve through getComputedStyle, so it is read from the
+// stylesheet Emotion injects — narrowed to rules generated for this entry's
+// label wrapper and targeting the label itself.
+const labelRulesFor = (link: HTMLElement): string[] => {
+    const wrapper = link.querySelector('.MuiListItemText-root');
+    const ownClasses = Array.from(wrapper?.classList ?? []).filter((name) => name.startsWith('css-'));
+    const css = Array.from(document.querySelectorAll('style[data-emotion]'))
+        .map((tag) => tag.textContent ?? '')
+        .join('');
+    return css
+        .split('}')
+        .filter((rule) => ownClasses.some((name) => rule.startsWith(`.${name} .MuiListItemText-primary`)));
+};
+
 describe('TopBar', () => {
     it('renders the brand as a link home', () => {
         render(<TopBar brand="Ember Hollow"/>);
@@ -170,6 +185,26 @@ describe('TopBar', () => {
         const drawer = screen.getByRole('presentation');
         expect(within(drawer).getByRole('link', {name: 'Contact'}).getAttribute('aria-current')).toBe('page');
         expect(within(drawer).getByRole('link', {name: 'News'}).getAttribute('aria-current')).toBeNull();
+    });
+
+    // The selected-item tint is colour alone; the label's weight and underline
+    // are the visible "you are here" that does not depend on telling two
+    // shades apart.
+    it('sets the current drawer entry in bold and underlined, and no other entry', async () => {
+        const user = userEvent.setup();
+        render(<TopBar brand="Ember Hollow" links={LINKS} menus={MENUS} pathname="/contact"/>);
+        await user.click(screen.getByRole('button', {name: 'Open navigation menu'}));
+
+        const drawer = screen.getByRole('presentation');
+        const current = labelRulesFor(within(drawer).getByRole('link', {name: 'Contact'})).join('');
+        expect(current).toContain('font-weight:700');
+        expect(current).toContain('text-decoration:underline');
+
+        for (const label of ['Home', 'News', 'Guides']) {
+            const rules = labelRulesFor(within(drawer).getByRole('link', {name: label})).join('');
+            expect(rules).not.toContain('font-weight:700');
+            expect(rules).not.toContain('text-decoration:underline');
+        }
     });
 
     it('opens an off-site drawer entry in a new tab, safely, and never marks it current', async () => {

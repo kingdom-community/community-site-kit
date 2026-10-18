@@ -126,7 +126,10 @@ const NavDropdown: React.FC<{menu: NavMenu; pathname: string}> = ({menu, pathnam
 
 // An in-site drawer entry. `selected` only tints the background, which is
 // colour alone; `aria-current` is what makes "you are here" survive a screen
-// reader, the same way `NavButton` carries it in the inline bar.
+// reader, and the weight and underline on the label are what make it survive
+// colour-blind vision, the same way `NavButton` carries both in the inline bar.
+// The label is targeted by class rather than through `primaryTypographyProps`,
+// which MUI deprecates after v5 and this package's peer range reaches past.
 const DrawerRouteItem: React.FC<{link: NavLink; pathname: string}> = ({link, pathname}) => {
     const active = isActiveNavLink(pathname, link.href);
     return (
@@ -136,7 +139,12 @@ const DrawerRouteItem: React.FC<{link: NavLink; pathname: string}> = ({link, pat
             selected={active}
             aria-current={active ? 'page' : undefined}
         >
-            <ListItemText primary={link.label}/>
+            <ListItemText
+                primary={link.label}
+                sx={active
+                    ? {'& .MuiListItemText-primary': {fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: '6px'}}
+                    : undefined}
+            />
         </ListItemButton>
     );
 };
