@@ -406,7 +406,7 @@ The kit reads exactly one environment variable, and only through `siteBaseUrl()`
 
 | Variable | Default | Used for |
 |---|---|---|
-| `NEXT_PUBLIC_BASE_URL` | `http://localhost:3000` | The site's own public origin. Every absolute URL the site advertises — the canonical URL, `og:url`, `og:image`, the `<loc>` entries in `sitemap.xml`, and the `Sitemap:` line in `robots.txt` — is built from it, unless `createSeo` is given its own `baseUrl`. Must be `NEXT_PUBLIC_*` for browser code to see it; pass another name to `siteBaseUrl('MY_VAR')` if you prefer. |
+| `NEXT_PUBLIC_BASE_URL` | `http://localhost:3000` | The site's own public origin. Every absolute URL the site advertises — the canonical URL, `og:url`, `og:image`, the `<loc>` entries in `sitemap.xml`, and the `Sitemap:` line in `robots.txt` — is built from it (the first three from `createSeo`'s own `baseUrl` instead, if you pass one). Must be `NEXT_PUBLIC_*` for browser code to see it; pass another name to `siteBaseUrl('MY_VAR')` if you prefer. |
 
 Everything else is a prop.
 
