@@ -181,7 +181,8 @@ export const Seo = createSeo({
 <Seo title="News" description="What changed while you were away."/>
 ```
 
-`createSeo` reads the site's origin once, at module scope. Pass `path={null}` on
+`createSeo` reads the site's origin once, at module scope — from `siteBaseUrl()`
+unless you pass `baseUrl` alongside `siteName`. Pass `path={null}` on
 an error page: it stands in for a URL that is not a real page, so it must not
 claim a canonical one.
 
@@ -341,8 +342,9 @@ The rules every site gets the same way:
   filter never offers a dead end.
 - `descendingBy` puts unknown numbers (null or undefined) after every known one,
   including zero, and every sort helper breaks ties by title.
-- `relatedItems(item, all, facet)` lists the items sharing the most values of a
-  facet with the given one ("related plugins").
+- `relatedItems(item, all, facet, limit)` lists the items sharing the most values
+  of a facet with the given one ("related plugins"), ties by title, at most
+  `limit` of them (4 unless you pass another).
 
 The same functions are exported from the package root too, for a site that
 already imports the kit there.
@@ -404,7 +406,7 @@ The kit reads exactly one environment variable, and only through `siteBaseUrl()`
 
 | Variable | Default | Used for |
 |---|---|---|
-| `NEXT_PUBLIC_BASE_URL` | `http://localhost:3000` | The site's own public origin. Every absolute URL the site advertises — the canonical URL, `og:url`, `og:image`, the `<loc>` entries in `sitemap.xml`, and the `Sitemap:` line in `robots.txt` — is built from it. Must be `NEXT_PUBLIC_*` for browser code to see it; pass another name to `siteBaseUrl('MY_VAR')` if you prefer. |
+| `NEXT_PUBLIC_BASE_URL` | `http://localhost:3000` | The site's own public origin. Every absolute URL the site advertises — the canonical URL, `og:url`, `og:image`, the `<loc>` entries in `sitemap.xml`, and the `Sitemap:` line in `robots.txt` — is built from it (the first three from `createSeo`'s own `baseUrl` instead, if you pass one). Must be `NEXT_PUBLIC_*` for browser code to see it; pass another name to `siteBaseUrl('MY_VAR')` if you prefer. |
 
 Everything else is a prop.
 
