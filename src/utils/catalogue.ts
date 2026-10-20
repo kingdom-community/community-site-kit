@@ -127,10 +127,15 @@ export const filterCatalogue = <T extends CatalogueItem>(
     query: CatalogueQuery
 ): T[] => {
     const text = normalisedText(query.text);
-    const selected = facets.filter((facet) => query.facets?.[facet.key]);
+    // Each selection is read once and kept beside its facet, so the value the
+    // items are checked against is the same one that was found to be set.
+    const selected = facets.flatMap((facet) => {
+        const value = query.facets?.[facet.key];
+        return value ? [{facet, value}] : [];
+    });
     return items.filter((item) =>
         (!text || matchesText(item, facets, text)) &&
-        selected.every((facet) => valuesOf(facet, item).includes(query.facets![facet.key]!)));
+        selected.every(({facet, value}) => valuesOf(facet, item).includes(value)));
 };
 
 /** Whether the query narrows anything — for auto-expanding a folded filter panel. */
