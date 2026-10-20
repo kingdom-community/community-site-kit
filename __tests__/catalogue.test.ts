@@ -50,6 +50,11 @@ describe('filterCatalogue', () => {
         expect(ids(filterCatalogue(projects, facets, {text: '   ', facets: {tag: null}}))).toHaveLength(5);
     });
 
+    it('treats an empty or undefined selection as no filter on that facet', () => {
+        expect(filterCatalogue(projects, facets, {facets: {tag: ''}})).toHaveLength(5);
+        expect(ids(filterCatalogue(projects, facets, {facets: {tag: undefined, category: 'Games'}}))).toEqual(['roam']);
+    });
+
     it('matches the search text in the title, the description or a searchable facet value, ignoring case', () => {
         expect(ids(filterCatalogue(projects, facets, {text: 'FIEF'}))).toEqual(['fiefs']);
         expect(ids(filterCatalogue(projects, facets, {text: 'ecosystem'}))).toEqual(['apex']);
