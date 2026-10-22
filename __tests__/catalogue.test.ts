@@ -3,6 +3,7 @@ import {describe, expect, it} from 'vitest';
 import {
     compareDottedVersions,
     compareDottedVersionsDescending,
+    compareTitles,
     descendingBy,
     facetValueCounts,
     facetValues,
@@ -128,6 +129,14 @@ describe('sortCatalogue and descendingBy', () => {
         expect(ids(sortCatalogue(items, {compare: descendingBy<Project>((p) => p.servers)}))).toEqual(['a', 'b']);
     });
 
+    it('breaks a tie between equal known numbers by title', () => {
+        const items: Project[] = [
+            {id: 'b', title: 'b', description: '', servers: 5},
+            {id: 'a', title: 'A', description: '', servers: 5}
+        ];
+        expect(ids(sortCatalogue(items, {compare: descendingBy<Project>((p) => p.servers)}))).toEqual(['a', 'b']);
+    });
+
     it('never mutates its input', () => {
         const input = [...projects];
         sortCatalogue(input, {compare: (a, b) => b.title.localeCompare(a.title)});
@@ -135,10 +144,25 @@ describe('sortCatalogue and descendingBy', () => {
     });
 });
 
+describe('compareTitles', () => {
+    // A plain string sort would put every capitalised title before every
+    // lower-case one.
+    it('orders titles alphabetically, ignoring case', () => {
+        const titles = ['roam', 'Medieval Factions', 'apex'].map((title) => ({title}));
+        expect(titles.sort(compareTitles).map(({title}) => title)).toEqual(['apex', 'Medieval Factions', 'roam']);
+        expect(compareTitles({title: 'Apex'}, {title: 'apex'})).toBe(0);
+    });
+});
+
 describe('compareDottedVersions', () => {
     it('orders by each numeric part rather than as text', () => {
         expect(['1.21', '1.9', '26.2', '1.19.4'].sort(compareDottedVersions)).toEqual(['1.9', '1.19.4', '1.21', '26.2']);
         expect(compareDottedVersions('1.21', '1.21.0')).toBe(0);
+    });
+
+    it('reads a part that is not a number as zero', () => {
+        expect(compareDottedVersions('1.x', '1.0')).toBe(0);
+        expect(compareDottedVersions('1.x', '1.1')).toBeLessThan(0);
     });
 });
 
@@ -150,5 +174,17 @@ describe('relatedItems', () => {
     it('returns nothing for an item with no values, and respects the limit', () => {
         expect(relatedItems(projects[3]!, projects, tag)).toEqual([]);
         expect(ids(relatedItems(projects[0]!, projects, tag, 1))).toEqual(['cur']);
+    });
+
+    // Every related item in the shared fixture has one value in common, so
+    // only the title order shows there; here a later title shares more.
+    it('puts more values in common ahead of an earlier title, counting a repeated value once', () => {
+        const items: Project[] = [
+            {id: 'self', title: 'Self', description: '', tags: ['x', 'y']},
+            {id: 'alpha', title: 'Alpha', description: '', tags: ['x']},
+            {id: 'beta', title: 'Beta', description: '', tags: ['x', 'x']},
+            {id: 'zulu', title: 'Zulu', description: '', tags: ['y', 'x']}
+        ];
+        expect(ids(relatedItems(items[0]!, items, tag))).toEqual(['zulu', 'alpha', 'beta']);
     });
 });
