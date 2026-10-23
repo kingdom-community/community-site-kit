@@ -341,7 +341,10 @@ The rules every site gets the same way:
 - `facetValues` / `facetValueCounts` offer only values some item carries, so a
   filter never offers a dead end.
 - `descendingBy` puts unknown numbers (null or undefined) after every known one,
-  including zero, and every sort helper breaks ties by title.
+  including zero, and breaks ties by title (`compareTitles`, ignoring case).
+  `compareDottedVersions` and `compareDottedVersionsDescending` order facet
+  values rather than items, so they have no title to fall back to: equal
+  versions compare as equal.
 - `relatedItems(item, all, facet, limit)` lists the items sharing the most values
   of a facet with the given one ("related plugins"), ties by title, at most
   `limit` of them (4 unless you pass another).
@@ -435,8 +438,9 @@ media query `CatalogueGrid` uses to choose the bottom sheet over the panel).
 **Styles** — `import {styles} from '@kingdom-community/community-site-kit'` for
 the shared `sx` factories the chrome is built from (`pageStyle`,
 `sectionHeaderStyle`, `panelStyle`, `heroBoxStyle`, and the rest). Most are
-functions of the MUI theme, so restyling them means restyling your palette; a
-few (`toggleSwitchBoxStyle`, `navDrawerDividerStyle`) are plain `sx` objects.
+functions of the MUI theme, so restyling them means restyling your palette;
+others (`toggleSwitchBoxStyle`, `navDrawerDividerStyle`, `visuallyHiddenStyle` and
+most of the `catalogue*` pieces) are plain `sx` objects.
 
 Everything the kit animates honours `prefers-reduced-motion` already. For your
 own animated `sx`, the same three pieces are exported alongside them:
