@@ -1,7 +1,7 @@
 {
   "name": "@kingdom-community/community-site-kit",
   "version": "0.1.0",
-  "description": "Shared Next.js + MUI building blocks for a community website: SSR-safe colour mode, prop-driven nav bars, SEO metadata and sitemap/robots.txt builders.",
+  "description": "Shared Next.js + MUI building blocks for a community website: SSR-safe colour mode, prop-driven nav bars, SEO metadata, sitemap/robots.txt builders, and catalogue search, filter and sort helpers.",
   "license": "MIT",
   "author": "Daniel McCoy Stephenson <dmccoystephenson@gmail.com>",
   "type": "module",
