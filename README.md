@@ -186,6 +186,12 @@ unless you pass `baseUrl` alongside `siteName`. Pass `path={null}` on
 an error page: it stands in for a URL that is not a real page, so it must not
 claim a canonical one.
 
+The social card itself can be drawn by [`tools/og-card`](tools/og-card/README.md),
+a Python tool that renders a small 3D scene with
+[Strata](https://github.com/Preponderous-Software/strata) and sets the title over
+it. The tool writes a 1200×630 PNG and the alt text you give it, ready for
+`socialImage` and `socialImageAlt`. It is not part of the npm package.
+
 ### 4. Crawler documents
 
 `pages/sitemap.xml.ts`:

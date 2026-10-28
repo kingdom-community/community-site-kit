@@ -1,0 +1,5 @@
+# What og_card.py renders with. Pinned so the same spec gives the same bytes.
+# strata-engine is Strata's official Python binding at the v0.6.0 tag's commit,
+# matching strata.lock.json (the library itself is downloaded and SHA-checked).
+Pillow==10.4.0
+strata-engine @ git+https://github.com/Preponderous-Software/strata@c2d7ee4c1102726c654c90d8361383d9ba3590b3#subdirectory=bindings/python

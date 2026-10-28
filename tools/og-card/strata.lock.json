@@ -1,0 +1,7 @@
+{
+  "comment": "The Strata release og_card.py renders with. Change only by bumping every field together (and the strata-engine tag in requirements.txt); sha256 is copied from the release's SHA256SUMS.",
+  "version": "0.6.0",
+  "asset": "libstrata-0.6.0-linux-x64.so",
+  "url": "https://github.com/Preponderous-Software/strata/releases/download/v0.6.0/libstrata-0.6.0-linux-x64.so",
+  "sha256": "3815068f90afa67b42177359a7ea918a5de321d7f7bad8706fa5275c4906af2a"
+}
