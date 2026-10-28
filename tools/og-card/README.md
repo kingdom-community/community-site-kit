@@ -59,6 +59,7 @@ A site keeps one JSON file per card, next to whatever it documents. Paths in it 
 | `palette` | no | A list of `#rrggbb` colours, used by `village` (roofs) and `arcade` (cabinets). |
 | `logo` | no | A small image drawn before the wordmark. |
 | `credit` | no | The credit line's text, followed by the Strata version. Default "Rendered with Strata". |
+| `colors` | no | 2 to 256: save a palette PNG with at most this many colours (median cut, dithered). It is about a third of the size, for hosts that cap the card's bytes. |
 
 Next to the spec, the tool writes `<spec name>.provenance.json`. It records the tool commit, the Strata release and the library's SHA-256, the Pillow version and font hashes, the spec, and the PNG's SHA-256.
 
