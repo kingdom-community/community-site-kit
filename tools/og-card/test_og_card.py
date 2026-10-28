@@ -55,7 +55,8 @@ class SpecTests(unittest.TestCase):
         self.assertIn("url, alt", str(ctx.exception))
 
     def test_rejects_unknown_keys_scene_colour_and_output(self):
-        for bad in (spec(tittle="typo"), spec(scene="spaceship"), spec(accent="gold"), spec(output="card.jpg")):
+        for bad in (spec(tittle="typo"), spec(scene="spaceship"), spec(accent="gold"), spec(output="card.jpg"),
+                    spec(colors=1), spec(colors=300), spec(colors="256"), spec(colors=True)):
             with self.assertRaises(og_card.CardError):
                 og_card.validate_spec(bad)
 
@@ -186,6 +187,24 @@ class RenderTests(unittest.TestCase):
             out.write_bytes(first[:-10] + b"0123456789")
             with self.assertRaises(og_card.CardError):
                 og_card.make_card(path, check=True)
+
+
+class PaletteTests(unittest.TestCase):
+    def test_a_palette_card_keeps_its_size_and_shrinks(self):
+        import io
+
+        from PIL import Image
+
+        rng = random.Random(4)
+        card = Image.new("RGB", (og_card.WIDTH, og_card.HEIGHT))
+        card.putdata([(rng.randrange(256), rng.randrange(256), 128) for _ in range(og_card.WIDTH * og_card.HEIGHT)])
+        small = og_card.reduce_colors(card, 64)
+        self.assertEqual((small.mode, small.size), ("P", (og_card.WIDTH, og_card.HEIGHT)))
+        self.assertLessEqual(len(small.getcolors(256) or []), 64)
+        a, b = io.BytesIO(), io.BytesIO()
+        small.save(a, format="PNG")
+        og_card.reduce_colors(card, 64).save(b, format="PNG")
+        self.assertEqual(a.getvalue(), b.getvalue())  # quantising is deterministic too
 
 
 class LockTests(unittest.TestCase):
