@@ -990,6 +990,15 @@ def tool_commit() -> str:
         return "unknown"
 
 
+def _site_relative(spec_path: Path) -> str:
+    """The spec's path inside its git checkout (og-card/card.json), else its name."""
+    resolved = spec_path.resolve()
+    for parent in resolved.parents:
+        if (parent / ".git").exists():
+            return resolved.relative_to(parent).as_posix()
+    return resolved.name
+
+
 def provenance(spec: dict, spec_path: Path, png: Path, library_path: str, gpu: str) -> dict:
     import PIL
 
@@ -998,7 +1007,7 @@ def provenance(spec: dict, spec_path: Path, png: Path, library_path: str, gpu: s
         "tool": "community-site-kit tools/og-card/og_card.py",
         "tool_repository": "https://github.com/kingdom-community/community-site-kit",
         "tool_commit": tool_commit(),
-        "command": "python3 tools/og-card/og_card.py %s" % spec_path.name,
+        "command": "python3 tools/og-card/og_card.py <site>/%s" % _site_relative(spec_path),
         "renderer": {"engine": "Strata", "version": lock["version"], "asset": lock["asset"],
                      "asset_sha256": lock["sha256"], "library_sha256": sha256_file(Path(library_path)),
                      "binding": "strata-engine %s" % lock["version"], "gpu": gpu},
