@@ -52,16 +52,18 @@ A site keeps one JSON file per card, next to whatever it documents. Paths in it 
 | `url` | yes | The address shown at the bottom left. |
 | `alt` | yes | A description of the picture, 20 to 420 characters. The site emits it as `og:image:alt` and `twitter:image:alt`. Update it whenever the scene or text changes. |
 | `seed` | no (1) | Picks the scene's layout. The same seed always gives the same scene. |
-| `sun` | no | A fixed sun: `azimuth` in degrees (0 = +Z, 90 = +X) and `elevation` in degrees above the horizon (−10 to 90). Used by the outdoor scenes. Below about 8° the village lights its lamps. |
+| `sun` | no (azimuth 225, elevation 20) | A fixed sun: `azimuth` in degrees (0 = +Z, 90 = +X) and `elevation` in degrees above the horizon (−10 to 90). Used by the outdoor scenes. Below about 8° the village lights its lamps. |
 | `wordmark` | no | A small upper-case line above the title, in the accent colour. |
 | `subtitle` | no | Up to two lines under the title. |
-| `accent` | no | `#rrggbb`. Used for the rule under the title and the wordmark, and by the scenes for banners and roofs. |
+| `accent` | no (`#4263eb`) | `#rrggbb`. Used for the rule under the title and the wordmark, and by the scenes for banners and roofs. |
 | `palette` | no | A list of `#rrggbb` colours, used by `village` (roofs) and `arcade` (cabinets). |
 | `logo` | no | A small image drawn before the wordmark. |
 | `credit` | no | The credit line's text, followed by the Strata version. Default "Rendered with Strata". |
 | `colors` | no | 2 to 256: save a palette PNG with at most this many colours (median cut, dithered). It is about a third of the size, for hosts that cap the card's bytes. |
 
-Next to the spec, the tool writes `<spec name>.provenance.json`. It records the tool commit, the Strata release and the library's SHA-256, the Pillow version and font hashes, the spec, and the PNG's SHA-256.
+Any other key is rejected, except `comment`, which the tool ignores and leaves out of the provenance record.
+
+Next to the spec, the tool writes a provenance file named after the spec without its extension: `og-card.json` gets `og-card.provenance.json`. It records the tool commit, the Strata release, binding and the library's SHA-256, the GPU string, the Python and Pillow versions and font hashes, the spec, and the PNG's SHA-256.
 
 ## Scenes
 
