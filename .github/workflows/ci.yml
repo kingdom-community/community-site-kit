@@ -22,3 +22,28 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  og-card:
+    # tools/og-card: the Strata-rendered link-preview card generator (Python, not
+    # part of the npm package). Renders headless on Mesa llvmpipe, so the render
+    # tests are required here rather than skipped.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.8', '3.12']
+    defaults:
+      run:
+        working-directory: tools/og-card
+    env:
+      OG_CARD_REQUIRE_RENDER: '1'
+      LIBGL_ALWAYS_SOFTWARE: '1'
+      GALLIUM_DRIVER: llvmpipe
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libegl1 libgl1-mesa-dri fonts-dejavu-core
+      - run: pip install -r requirements.txt
+      - run: python -m unittest -v
