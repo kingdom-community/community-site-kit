@@ -27,11 +27,17 @@ jobs:
     # tools/og-card: the Strata-rendered link-preview card generator (Python, not
     # part of the npm package). Renders headless on Mesa llvmpipe, so the render
     # tests are required here rather than skipped.
-    runs-on: ubuntu-latest
+    # Python 3.8 (the binding's floor) is no longer installable on the newest
+    # ubuntu-latest image, so it runs on 22.04; 3.12 runs on the latest.
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8', '3.12']
+        include:
+          - python-version: '3.8'
+            os: ubuntu-22.04
+          - python-version: '3.12'
+            os: ubuntu-latest
     defaults:
       run:
         working-directory: tools/og-card
