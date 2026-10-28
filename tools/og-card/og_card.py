@@ -77,7 +77,7 @@ class CardError(Exception):
 # --------------------------------------------------------------------------- spec
 
 REQUIRED = ("output", "scene", "title", "url", "alt")
-OPTIONAL = ("seed", "sun", "wordmark", "subtitle", "accent", "palette", "logo", "credit")
+OPTIONAL = ("seed", "sun", "wordmark", "subtitle", "accent", "palette", "logo", "credit", "colors")
 
 
 def hex_rgb(value: str) -> Tuple[int, int, int]:
@@ -115,6 +115,10 @@ def validate_spec(spec: dict) -> dict:
     out.setdefault("wordmark", "")
     out.setdefault("subtitle", "")
     out.setdefault("credit", "Rendered with Strata")
+    if "colors" in spec:
+        colors = spec["colors"]
+        if not isinstance(colors, int) or isinstance(colors, bool) or not 2 <= colors <= 256:
+            raise CardError("colors must be a whole number from 2 to 256", EXIT_SPEC)
     return out
 
 
@@ -964,6 +968,14 @@ def scrim_over(bg: Tuple[int, int, int], alpha: int = SCRIM_ALPHA) -> Tuple[int,
     return tuple(int(round(a * s + (1 - a) * c)) for s, c in zip(SCRIM_COLOR, bg))  # type: ignore[return-value]
 
 
+def reduce_colors(card, colors: int):
+    """The card as a palette PNG of at most `colors` colours (median cut, Floyd-Steinberg
+    dithered): about a third of the bytes, for hosts that cap the card's size."""
+    from PIL import Image
+
+    return card.quantize(colors=colors, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.FLOYDSTEINBERG)
+
+
 def is_blank(rgba: bytes, width: int, height: int) -> bool:
     """True when the render is one flat colour (a failed context draws nothing)."""
     step = max(1, (width * height) // 4096) * 4
@@ -1043,6 +1055,8 @@ def make_card(spec_path: Path, library: Optional[str] = None, check: bool = Fals
     if is_blank(rgba, w, h):
         raise CardError("the render came out blank; is the EGL/Mesa driver working?")
     card = compose(rgba, (w, h), spec, spec_dir, strata_lock()["version"])
+    if spec.get("colors"):
+        card = reduce_colors(card, spec["colors"])
     with strata.Engine(lib, 16, 16) as probe:
         gpu = probe.gpu_description()
     if check:
