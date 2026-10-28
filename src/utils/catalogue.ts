@@ -193,3 +193,44 @@ export const relatedItems = <T extends CatalogueItem>(
         .slice(0, limit)
         .map(({other}) => other);
 };
+
+/**
+ * One section of a tiered catalogue, such as "Most complete" or "Small games
+ * & experiments". Tiers are listed most finished first, so a visitor meets
+ * the deepest items before the small ones.
+ */
+export interface CatalogueTier {
+    /** Stable key, as an item's tier names it; also used in element ids. */
+    key: string;
+    /** The tier's heading, shown above its grid. */
+    heading: string;
+    /** A line under the heading saying what belongs in the tier. */
+    blurb?: string;
+}
+
+/**
+ * Items split into tiers, in tier order, keeping each tier's items in the
+ * order given (so a site's chosen sort still applies within a tier). Empty
+ * tiers are left out. An item whose tier is unknown or absent is filed under
+ * the last tier, so nothing is ever dropped.
+ *
+ * `tierOf` is where a site decides: a hand-set tier in its data, one derived
+ * from signals such as releases or usage, or a hand-set one falling back to a
+ * derived one.
+ */
+export const groupByTier = <T>(
+    items: readonly T[],
+    tiers: readonly CatalogueTier[],
+    tierOf: (item: T) => string | null | undefined
+): {tier: CatalogueTier; items: T[]}[] => {
+    const last = tiers[tiers.length - 1]?.key;
+    if (last === undefined) return [];
+    const known = new Set(tiers.map((tier) => tier.key));
+    const keyOf = (item: T): string => {
+        const key = tierOf(item);
+        return key != null && known.has(key) ? key : last;
+    };
+    return tiers
+        .map((tier) => ({tier, items: items.filter((item) => keyOf(item) === tier.key)}))
+        .filter((group) => group.items.length > 0);
+};

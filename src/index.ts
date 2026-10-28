@@ -30,6 +30,7 @@ export {
     type CatalogueFilterBarFacet,
     type CatalogueFilterBarProps
 } from './components/CatalogueFilterBar.js';
+export {TieredCatalogueGrid, type TieredCatalogueGridProps} from './components/TieredCatalogueGrid.js';
 
 export {ColorModeContext, type ColorModeContextValue} from './utils/ColorModeContext.js';
 export {
@@ -80,6 +81,7 @@ export {
     facetValueCounts,
     facetValues,
     filterCatalogue,
+    groupByTier,
     isCatalogueQueryActive,
     relatedItems,
     sortCatalogue,
@@ -87,6 +89,7 @@ export {
     type CatalogueItem,
     type CatalogueQuery,
     type CatalogueSortOption,
+    type CatalogueTier,
     type FacetSelection,
     type FacetValue,
     type FacetValueCount

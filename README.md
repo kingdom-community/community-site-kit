@@ -409,6 +409,38 @@ filter" button, unfolds by itself while a filter is active, and says "Showing N
 of M". The page owns the query and sort state and runs `filterCatalogue` and
 `sortCatalogue` itself.
 
+#### Tiers
+
+`TieredCatalogueGrid` lays a catalogue out in tiers, most finished first, so a
+visitor meets the deepest items before the small ones: one `CatalogueGrid` per
+tier under a visible heading and blurb, all in one section holding the
+toolbar. The filter spans every tier, a sort orders items within each tier, a
+tier left empty is hidden, and `empty` shows when every tier is. `tierOf` is
+the site's call: a tier set by hand in its data, one derived from signals such
+as releases or usage, or a hand-set one falling back to a derived one. An item
+with no tier, or an unknown one, goes in the last tier. `groupByTier` (from
+`/catalogue`) is the pure grouping underneath.
+
+```tsx
+const TIERS = [
+    {key: 'complete', heading: 'Most complete', blurb: 'Start here.'},
+    {key: 'growing', heading: 'Still growing'},
+    {key: 'small', heading: 'Small projects & experiments'},
+];
+
+<TieredCatalogueGrid
+    items={shown}
+    tiers={TIERS}
+    tierOf={(p) => p.tier ?? derivedTier(p)}
+    heading="Projects"                     // visually hidden h2 of the whole
+    sectionId="projects"                   // each tier is #projects-<key>
+    renderIcon={...}
+    renderDetails={...}
+    toolbar={<CatalogueFilterBar ... />}
+    empty={...}
+/>
+```
+
 ## Configuration
 
 The kit reads exactly one environment variable, and only through `siteBaseUrl()`:
@@ -424,7 +456,7 @@ Everything else is a prop.
 **Components** — `ColorModeProvider`, `ColorModeToggle`, `ColorModeToggleSwitch`,
 `createColorModeToggleSwitch`, `TopBar`, `BottomBar`, `ErrorPage`,
 `UnavailablePanel`, `SkipLink`, `NextLinkComposed`, `createSeo`, `CatalogueGrid`,
-`CatalogueFilterBar`.
+`TieredCatalogueGrid`, `CatalogueFilterBar`.
 
 **Utilities** — `resolveInitialColorMode`, `readStoredColorMode`,
 `storeColorMode`, `applyColorModeToDocument`, `colorModeBootstrapScript`,
@@ -439,7 +471,7 @@ media query `CatalogueGrid` uses to choose the bottom sheet over the panel).
 **Catalogue** (also at `@kingdom-community/community-site-kit/catalogue`) —
 `filterCatalogue`, `sortCatalogue`, `isCatalogueQueryActive`, `facetValues`,
 `facetValueCounts`, `relatedItems`, `compareTitles`, `descendingBy`,
-`compareDottedVersions`, `compareDottedVersionsDescending`.
+`compareDottedVersions`, `compareDottedVersionsDescending`, `groupByTier`.
 
 **Styles** — `import {styles} from '@kingdom-community/community-site-kit'` for
 the shared `sx` factories the chrome is built from (`pageStyle`,
