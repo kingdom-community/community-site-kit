@@ -41,6 +41,10 @@ describe('groupByTier', () => {
         expect(groupByTier([{id: 'n', title: 'N'}], TIERS, tierOf)[0]?.tier.key).toBe('small');
     });
 
+    it('files an item whose tier is null under the last tier too', () => {
+        expect(groupByTier([{id: 'n', title: 'N'}], TIERS, () => null)[0]?.tier.key).toBe('small');
+    });
+
     it('is empty with no tiers', () => {
         expect(groupByTier(ITEMS, [], tierOf)).toEqual([]);
     });
@@ -77,6 +81,17 @@ describe('TieredCatalogueGrid', () => {
     it('shows the visible tier heading to sighted readers only once for assistive tech', () => {
         renderGrid(ITEMS);
         expect(screen.getAllByRole('heading', {name: 'Most complete'})).toHaveLength(1);
+    });
+
+    // Each tier is a CatalogueGrid of its own; without a per-tier id prefix
+    // every one would label itself by the same `catalogue-heading` id, and
+    // every tier would be announced under the first tier's name.
+    it('names each tier by its own heading, with no id repeated across tiers', () => {
+        renderGrid(ITEMS);
+        expect(screen.getByRole('region', {name: 'Most complete'}).id).toBe('games-complete');
+        expect(screen.getByRole('region', {name: 'Small things'}).id).toBe('games-small');
+        const ids = Array.from(document.querySelectorAll('[id]'), (element) => element.id);
+        expect(new Set(ids).size).toBe(ids.length);
     });
 
     it('shows `empty`, with the toolbar still there, when no item is left', () => {
