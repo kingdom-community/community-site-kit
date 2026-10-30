@@ -170,6 +170,8 @@ import {createSeo} from '@kingdom-community/community-site-kit';
 export const Seo = createSeo({
     siteName: 'Ember Hollow',
     description: 'A small survival server and the people on it.',
+    // Written out literally, so Next.js inlines it into the browser bundle too.
+    baseUrl: process.env.NEXT_PUBLIC_BASE_URL,
     socialImage: '/social-card.png',
     socialImageWidth: 1200,
     socialImageHeight: 630,
@@ -181,8 +183,15 @@ export const Seo = createSeo({
 <Seo title="News" description="What changed while you were away."/>
 ```
 
-`createSeo` reads the site's origin once, at module scope — from `siteBaseUrl()`
-unless you pass `baseUrl` alongside `siteName`. Pass `path={null}` on
+`createSeo` reads the site's origin once, at module scope — from `baseUrl` if
+you pass one, from `siteBaseUrl()` otherwise. Pass it as above: Next.js
+replaces only a literal `process.env.NEXT_PUBLIC_*` in the browser bundle, and
+`siteBaseUrl()` looks the variable up by name, so in the browser it returns
+`http://localhost:3000`. Left out, the server renders the right canonical URL
+and the browser swaps in a localhost one after hydration
+([#47](https://github.com/kingdom-community/community-site-kit/issues/47)).
+An unset variable is `undefined`, which falls back to `siteBaseUrl()` as before.
+Pass `path={null}` on
 an error page: it stands in for a URL that is not a real page, so it must not
 claim a canonical one.
 
@@ -447,7 +456,7 @@ The kit reads exactly one environment variable, and only through `siteBaseUrl()`
 
 | Variable | Default | Used for |
 |---|---|---|
-| `NEXT_PUBLIC_BASE_URL` | `http://localhost:3000` | The site's own public origin. Every absolute URL the site advertises — the canonical URL, `og:url`, `og:image`, the `<loc>` entries in `sitemap.xml`, and the `Sitemap:` line in `robots.txt` — is built from it (the first three from `createSeo`'s own `baseUrl` instead, if you pass one). Must be `NEXT_PUBLIC_*` for browser code to see it; pass another name to `siteBaseUrl('MY_VAR')` if you prefer. |
+| `NEXT_PUBLIC_BASE_URL` | `http://localhost:3000` | The site's own public origin. Every absolute URL the site advertises — the canonical URL, `og:url`, `og:image`, the `<loc>` entries in `sitemap.xml`, and the `Sitemap:` line in `robots.txt` — is built from it (the first three from `createSeo`'s own `baseUrl` instead, if you pass one). `siteBaseUrl()` looks the variable up by name, which Next.js does not inline into browser code, so it is only reliable on the server: pass `createSeo` a literal `process.env.NEXT_PUBLIC_BASE_URL` (see [Per-page metadata](#3-per-page-metadata)). Pass another name to `siteBaseUrl('MY_VAR')` if you prefer, for server-side callers. |
 
 Everything else is a prop.
 
