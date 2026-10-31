@@ -56,4 +56,13 @@ describe('siteBaseUrl', () => {
         vi.stubEnv('SITE_ORIGIN', 'https://other.test');
         expect(siteBaseUrl('SITE_ORIGIN')).toBe('https://other.test');
     });
+
+    // Next.js copies NEXT_PUBLIC_* into browser bundles by textual replacement of
+    // a literal member expression, and leaves `process.env[name]` alone. At run
+    // time in Node the two are indistinguishable, so the contract is asserted on
+    // the function's source: lose the literal and the browser silently gets the
+    // localhost fallback (#47).
+    it('reads the default variable as a literal access a bundler can inline', () => {
+        expect(siteBaseUrl.toString()).toContain('process.env.NEXT_PUBLIC_BASE_URL');
+    });
 });
