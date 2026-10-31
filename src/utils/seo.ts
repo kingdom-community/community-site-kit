@@ -29,13 +29,21 @@ export const DEFAULT_BASE_URL = 'http://localhost:3000';
 // `sitemap.ts` — is built from this. Read through a function rather than a
 // constant so each caller decides when to read it: a component created once at
 // module scope reads it once (the canonical origin never varies within a running
-// build, and Next.js inlines NEXT_PUBLIC_* at build time), while the sitemap and
-// robots.txt routes read it per request.
+// build), while the sitemap and robots.txt routes read it per request.
 //
-// `NEXT_PUBLIC_BASE_URL` is the default name because Next.js only exposes
-// `NEXT_PUBLIC_*` to browser code; pass `envVar` if your site uses another name.
-export const siteBaseUrl = (envVar = 'NEXT_PUBLIC_BASE_URL'): string =>
-    process.env[envVar] || DEFAULT_BASE_URL;
+// The default name is read as a literal `process.env.NEXT_PUBLIC_BASE_URL`
+// member expression, never through `process.env[envVar]`: Next.js copies
+// `NEXT_PUBLIC_*` values into browser code by replacing literal accesses at
+// build time, and leaves a lookup by name alone, so the dynamic form returns
+// the localhost fallback in the browser whatever the variable is set to. A
+// custom `envVar` can only be looked up by name, so it is reliable on the server
+// alone.
+export const siteBaseUrl = (envVar = 'NEXT_PUBLIC_BASE_URL'): string => {
+    const configured = envVar === 'NEXT_PUBLIC_BASE_URL'
+        ? process.env.NEXT_PUBLIC_BASE_URL
+        : process.env[envVar];
+    return configured || DEFAULT_BASE_URL;
+};
 
 // Join the site's own origin to a canonical path. `baseUrl` may or may not carry
 // a trailing slash; `path` is the output of `canonicalPath`.

@@ -13,8 +13,10 @@ export interface SeoDefaults {
     description: string;
     // The site's own public origin, used to make every advertised URL absolute.
     // Defaults to `siteBaseUrl()`, i.e. `NEXT_PUBLIC_BASE_URL`. Read once, when
-    // `createSeo` is called: frameworks inline `NEXT_PUBLIC_*` at build time and
-    // the canonical origin does not vary within a running build.
+    // `createSeo` is called, because the canonical origin does not vary within a
+    // running build. Passing a literal `process.env.NEXT_PUBLIC_BASE_URL` from
+    // the site's own code is still the safest choice, since a bundler is certain
+    // to inline a value written in the site's own source.
     baseUrl?: string;
     // Site-wide preview image for shared links: a path under `public/`
     // ("/social-card.png") or an absolute URL. Leave it unset when no card

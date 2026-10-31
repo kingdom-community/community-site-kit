@@ -185,10 +185,11 @@ export const Seo = createSeo({
 
 `createSeo` reads the site's origin once, at module scope — from `baseUrl` if
 you pass one, from `siteBaseUrl()` otherwise. Pass it as above: Next.js
-replaces only a literal `process.env.NEXT_PUBLIC_*` in the browser bundle, and
-`siteBaseUrl()` looks the variable up by name, so in the browser it returns
-`http://localhost:3000`. Left out, the server renders the right canonical URL
-and the browser swaps in a localhost one after hydration
+replaces only a literal `process.env.NEXT_PUBLIC_*` in the browser bundle.
+`siteBaseUrl()` does read its default variable that way, but a value written in
+your own source is certain to be inlined. If the browser bundle ends up without
+the value, the server renders the right canonical URL and the browser swaps in
+a `http://localhost:3000` one after hydration
 ([#47](https://github.com/kingdom-community/community-site-kit/issues/47)).
 An unset variable is `undefined`, which falls back to `siteBaseUrl()` as before.
 Pass `path={null}` on
@@ -456,7 +457,7 @@ The kit reads exactly one environment variable, and only through `siteBaseUrl()`
 
 | Variable | Default | Used for |
 |---|---|---|
-| `NEXT_PUBLIC_BASE_URL` | `http://localhost:3000` | The site's own public origin. Every absolute URL the site advertises — the canonical URL, `og:url`, `og:image`, the `<loc>` entries in `sitemap.xml`, and the `Sitemap:` line in `robots.txt` — is built from it (the first three from `createSeo`'s own `baseUrl` instead, if you pass one). `siteBaseUrl()` looks the variable up by name, which Next.js does not inline into browser code, so it is only reliable on the server: pass `createSeo` a literal `process.env.NEXT_PUBLIC_BASE_URL` (see [Per-page metadata](#3-per-page-metadata)). Pass another name to `siteBaseUrl('MY_VAR')` if you prefer, for server-side callers. |
+| `NEXT_PUBLIC_BASE_URL` | `http://localhost:3000` | The site's own public origin. Every absolute URL the site advertises — the canonical URL, `og:url`, `og:image`, the `<loc>` entries in `sitemap.xml`, and the `Sitemap:` line in `robots.txt` — is built from it (the first three from `createSeo`'s own `baseUrl` instead, if you pass one). `siteBaseUrl()` reads this default name as a literal `process.env.NEXT_PUBLIC_BASE_URL`, the form Next.js inlines into browser code; still, pass `createSeo` a literal `process.env.NEXT_PUBLIC_BASE_URL` of your own (see [Per-page metadata](#3-per-page-metadata)). Pass another name to `siteBaseUrl('MY_VAR')` if you prefer. That name is looked up dynamically, which Next.js does not inline, so it is reliable only for server-side callers. |
 
 Everything else is a prop.
 
