@@ -12,11 +12,14 @@ export interface SeoDefaults {
     // the grey text under a shared link.
     description: string;
     // The site's own public origin, used to make every advertised URL absolute.
-    // Defaults to `siteBaseUrl()`, i.e. `NEXT_PUBLIC_BASE_URL`. Read once, when
-    // `createSeo` is called, because the canonical origin does not vary within a
-    // running build. Passing a literal `process.env.NEXT_PUBLIC_BASE_URL` from
-    // the site's own code is still the safest choice, since a bundler is certain
-    // to inline a value written in the site's own source.
+    // Absent or empty, it falls back to `siteBaseUrl()`, i.e.
+    // `NEXT_PUBLIC_BASE_URL`: an environment variable set to nothing arrives
+    // here as an empty string, and an empty origin would advertise relative URLs
+    // that scrapers do not resolve. Read once, when `createSeo` is called,
+    // because the canonical origin does not vary within a running build. Passing
+    // a literal `process.env.NEXT_PUBLIC_BASE_URL` from the site's own code is
+    // still the safest choice, since a bundler is certain to inline a value
+    // written in the site's own source.
     baseUrl?: string;
     // Site-wide preview image for shared links: a path under `public/`
     // ("/social-card.png") or an absolute URL. Leave it unset when no card
@@ -71,13 +74,14 @@ export interface SeoProps {
 export const createSeo = ({
     siteName,
     description: defaultDescription,
-    baseUrl = siteBaseUrl(),
+    baseUrl: configuredBaseUrl,
     socialImage = null,
     socialImageWidth,
     socialImageHeight,
     socialImageAlt,
     titleSeparator = ' — '
 }: SeoDefaults): React.FC<SeoProps> => {
+    const baseUrl = configuredBaseUrl || siteBaseUrl();
     const Seo: React.FC<SeoProps> = ({title, description, path, image, imageAlt, type = 'website', children}) => {
         const router = useRouter();
         // Optional-chained: a page rendered outside a router (a unit test, a

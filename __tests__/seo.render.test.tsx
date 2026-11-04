@@ -29,7 +29,10 @@ beforeEach(() => {
     router.pathname = '/';
 });
 
-afterEach(cleanup);
+afterEach(() => {
+    cleanup();
+    vi.unstubAllEnvs();
+});
 
 describe('createSeo', () => {
     it('uses the site name alone when a page supplies no title', () => {
@@ -137,6 +140,23 @@ describe('createSeo', () => {
         expect(meta(container, 'meta[property="og:image"]')).toBe('https://emberhollow.example/news/wipe-day.png');
         expect(container.querySelector('meta[property="og:image:alt"]')).toBeNull();
         expect(container.querySelector('meta[name="twitter:image:alt"]')).toBeNull();
+    });
+
+    // A site passes `baseUrl: process.env.NEXT_PUBLIC_BASE_URL`, and a variable
+    // set to nothing arrives as '' rather than undefined. Scrapers do not resolve
+    // the relative URLs an empty origin would produce.
+    it.each([
+        ['absent', undefined],
+        ['an empty string', '']
+    ])('falls back to siteBaseUrl() when baseUrl is %s', (_label, baseUrl) => {
+        vi.stubEnv('NEXT_PUBLIC_BASE_URL', 'https://configured.example');
+        router.asPath = '/news';
+        const Unset = createSeo({siteName: 'Ember Hollow', description: 'x', baseUrl, socialImage: '/social-card.png'});
+        const {container} = render(<Unset/>);
+        expect(container.querySelector('link[rel="canonical"]')?.getAttribute('href'))
+            .toBe('https://configured.example/news');
+        expect(meta(container, 'meta[property="og:url"]')).toBe('https://configured.example/news');
+        expect(meta(container, 'meta[property="og:image"]')).toBe('https://configured.example/social-card.png');
     });
 
     it('renders extra tags inside the same head block', () => {

@@ -37,7 +37,8 @@ export const DEFAULT_DISALLOWED_CRAWL_PATHS: readonly string[] = ['/api/'];
 //     that invents URLs — and the collection's index page, listed among the
 //     static paths, still gives the crawler a way in.
 export interface SitemapCollection {
-    // Route prefix, with or without surrounding slashes: "guides", "/news".
+    // Route prefix, with or without surrounding slashes: "guides", "/news". "/"
+    // or "" puts the pages at the site root.
     prefix: string;
     ids: readonly string[];
 }
@@ -45,10 +46,12 @@ export interface SitemapCollection {
 // Map a collection's ids onto their routes. Each id is percent-encoded as a
 // single path segment: most ids are plain slugs, but frameworks hand route
 // params back decoded, so encoding here is what keeps the advertised URL and the
-// route in agreement whatever an id contains.
+// route in agreement whatever an id contains. A root prefix contributes no
+// segment at all: `//id` would be a different URL from the page's own.
 export const collectionPaths = (prefix: string, ids: readonly string[]): string[] => {
     const trimmed = prefix.replace(/^\/+|\/+$/g, '');
-    return ids.map((id) => `/${trimmed}/${encodeURIComponent(id)}`);
+    const base = trimmed === '' ? '' : `/${trimmed}`;
+    return ids.map((id) => `${base}/${encodeURIComponent(id)}`);
 };
 
 export interface SitemapPathsOptions {

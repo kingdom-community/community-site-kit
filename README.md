@@ -191,7 +191,8 @@ your own source is certain to be inlined. If the browser bundle ends up without
 the value, the server renders the right canonical URL and the browser swaps in
 a `http://localhost:3000` one after hydration
 ([#47](https://github.com/kingdom-community/community-site-kit/issues/47)).
-An unset variable is `undefined`, which falls back to `siteBaseUrl()` as before.
+An unset or empty variable falls back to `siteBaseUrl()`, the same as passing no
+`baseUrl`.
 Pass `path={null}` on
 an error page: it stands in for a URL that is not a real page, so it must not
 claim a canonical one.
