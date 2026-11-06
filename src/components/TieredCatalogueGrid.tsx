@@ -2,7 +2,12 @@
 import * as Mui from '@mui/material';
 import React from 'react';
 
-import {CatalogueGrid, type CatalogueGridItem, type CatalogueGridProps} from './CatalogueGrid.js';
+import {
+    CatalogueGrid,
+    CatalogueOpenContext,
+    type CatalogueGridItem,
+    type CatalogueGridProps
+} from './CatalogueGrid.js';
 import {groupByTier, type CatalogueTier} from '../utils/catalogue.js';
 import {visuallyHiddenStyle} from '../styles/styles.js';
 
@@ -12,6 +17,9 @@ const {Box, Typography} = Mui;
 // tier under a visible heading and blurb, all inside one section that holds
 // the search and filters. The toolbar filters across every tier; a tier the
 // filter leaves empty is not shown, and `empty` stands in when every tier is.
+// The open panel is held here rather than per tier: a visitor sees one
+// catalogue, and each grid on its own would leave a panel open in one tier
+// while another tier opened a second.
 
 export interface TieredCatalogueGridProps<T extends CatalogueGridItem>
     extends Omit<CatalogueGridProps<T>, 'heading' | 'sectionId' | 'idPrefix'> {
@@ -38,38 +46,41 @@ export const TieredCatalogueGrid = <T extends CatalogueGridItem>({
 }: TieredCatalogueGridProps<T>): React.ReactElement => {
     const headingId = `${sectionId}-heading`;
     const groups = groupByTier(items, tiers, tierOf);
+    const openState = React.useState<string | null>(null);
     return (
         <Box id={sectionId} component="section" aria-labelledby={headingId} sx={sx}>
             <Typography id={headingId} variant="h2" sx={visuallyHiddenStyle}>
                 {heading}
             </Typography>
             {toolbar}
-            {groups.length === 0
-                ? empty
-                : groups.map(({tier, items: tierItems}) => (
-                    <CatalogueGrid
-                        {...grid}
-                        key={tier.key}
-                        items={tierItems}
-                        heading={tier.heading}
-                        sectionId={`${sectionId}-${tier.key}`}
-                        idPrefix={`${sectionId}-${tier.key}`}
-                        toolbar={
-                            // The grid's own h2 (visually hidden) names the
-                            // tier for screen readers; this is its visible twin.
-                            <Box className="catalogue-tier-header" sx={{mt: 3, mb: 1}}>
-                                <Typography variant="h5" component="p" aria-hidden="true">
-                                    {tier.heading}
-                                </Typography>
-                                {tier.blurb ? (
-                                    <Typography variant="body2" color="text.secondary">
-                                        {tier.blurb}
+            <CatalogueOpenContext.Provider value={openState}>
+                {groups.length === 0
+                    ? empty
+                    : groups.map(({tier, items: tierItems}) => (
+                        <CatalogueGrid
+                            {...grid}
+                            key={tier.key}
+                            items={tierItems}
+                            heading={tier.heading}
+                            sectionId={`${sectionId}-${tier.key}`}
+                            idPrefix={`${sectionId}-${tier.key}`}
+                            toolbar={
+                                // The grid's own h2 (visually hidden) names the
+                                // tier for screen readers; this is its visible twin.
+                                <Box className="catalogue-tier-header" sx={{mt: 3, mb: 1}}>
+                                    <Typography variant="h5" component="p" aria-hidden="true">
+                                        {tier.heading}
                                     </Typography>
-                                ) : null}
-                            </Box>
-                        }
-                    />
-                ))}
+                                    {tier.blurb ? (
+                                        <Typography variant="body2" color="text.secondary">
+                                            {tier.blurb}
+                                        </Typography>
+                                    ) : null}
+                                </Box>
+                            }
+                        />
+                    ))}
+            </CatalogueOpenContext.Provider>
         </Box>
     );
 };

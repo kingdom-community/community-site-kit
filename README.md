@@ -426,7 +426,8 @@ of M". The page owns the query and sort state and runs `filterCatalogue` and
 visitor meets the deepest items before the small ones: one `CatalogueGrid` per
 tier under a visible heading and blurb, all in one section holding the
 toolbar. The filter spans every tier, a sort orders items within each tier, a
-tier left empty is hidden, and `empty` shows when every tier is. `tierOf` is
+tier left empty is hidden, and `empty` shows when every tier is. Only one panel
+is open at a time across all the tiers, as in a single grid. `tierOf` is
 the site's call: a tier set by hand in its data, one derived from signals such
 as releases or usage, or a hand-set one falling back to a derived one. An item
 with no tier, or an unknown one, goes in the last tier. `groupByTier` (from
