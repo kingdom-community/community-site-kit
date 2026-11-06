@@ -27,7 +27,8 @@ const CloseIcon = interopDefault(CloseIconImport);
 // under a tile on hover or keyboard focus (and, for a button tile, on click).
 // A touch screen has no hover, so there a tap opens the same details in a
 // bottom sheet instead. The grid owns which one is open, so opening one closes
-// the rest.
+// the rest; grids that read as one catalogue share that through
+// CatalogueOpenContext.
 
 // A short wait before opening, so sweeping the pointer across the grid does
 // not flash a panel under every icon it passes, and a slightly longer one
@@ -38,6 +39,12 @@ export const CATALOGUE_CLOSE_DELAY_MS = 150;
 // A device whose only pointer cannot hover: a phone or tablet. False during
 // server rendering, so the page is first rendered for a desktop.
 export const TOUCH_ONLY_QUERY = '(hover: none)';
+
+// The open item's id and its setter, for grids that must keep one panel open
+// between them. Internal, and left out of index.ts on purpose: without a
+// provider each grid holds its own state, which is all a lone grid needs.
+type CatalogueOpenState = [string | null, React.Dispatch<React.SetStateAction<string | null>>];
+export const CatalogueOpenContext = React.createContext<CatalogueOpenState | null>(null);
 
 export interface CatalogueGridItem {
     id: string;
@@ -339,14 +346,15 @@ export const CatalogueGrid = <T extends CatalogueGridItem>({
     keepPanelsMounted = false,
     sx
 }: CatalogueGridProps<T>): React.ReactElement => {
-    const [openId, setOpenId] = React.useState<string | null>(null);
+    const ownOpenState = React.useState<string | null>(null);
+    const [openId, setOpenId] = React.useContext(CatalogueOpenContext) ?? ownOpenState;
     const touch = useMediaQuery(TOUCH_ONLY_QUERY);
-    const handleOpen = React.useCallback((id: string) => setOpenId(id), []);
+    const handleOpen = React.useCallback((id: string) => setOpenId(id), [setOpenId]);
     // Only the tile that is open may close it: a stale close timer from the
     // tile the pointer just left must not shut the panel it moved on to.
     const handleClose = React.useCallback(
         (id: string) => setOpenId((current) => (current === id ? null : current)),
-        []
+        [setOpenId]
     );
     const headingId = `${idPrefix}-heading`;
 
