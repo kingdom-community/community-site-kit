@@ -57,8 +57,8 @@ describe('collectionPaths', () => {
         expect(collectionPaths('news', ['wipe-day'])).toEqual(['/news/wipe-day']);
     });
 
-    // Doubled, the slash makes `//wipe-day`: still site-relative to
-    // `sitemapPathProblems`, but not the page's URL once made absolute.
+    // Doubled, the slash makes `//wipe-day`: not the page's URL once made
+    // absolute, and refused by `sitemapPathProblems`.
     it('puts a collection at the site root when the prefix has nothing in it', () => {
         expect(collectionPaths('/', ['wipe-day'])).toEqual(['/wipe-day']);
         expect(collectionPaths('', ['wipe-day'])).toEqual(['/wipe-day']);
