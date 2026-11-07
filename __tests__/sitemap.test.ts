@@ -122,6 +122,13 @@ describe('sitemapPathProblems', () => {
             .toEqual([{path: 'https://elsewhere.test/page', reason: 'not-site-relative'}]);
     });
 
+    // Starting with a slash is not enough: `//wipe-day` is a protocol-relative
+    // reference to the host `wipe-day`, and made absolute it is `https://site//wipe-day`.
+    it('rejects a path that starts with two slashes', () => {
+        expect(sitemapPathProblems(['//wipe-day']))
+            .toEqual([{path: '//wipe-day', reason: 'not-site-relative'}]);
+    });
+
     it('rejects a dynamic route template, which has no single canonical URL', () => {
         expect(sitemapPathProblems(['/guides/[id]']))
             .toEqual([{path: '/guides/[id]', reason: 'unresolved-dynamic-segment'}]);
