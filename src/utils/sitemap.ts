@@ -78,7 +78,9 @@ export const sitemapPaths = ({staticPaths, collections = []}: SitemapPathsOption
 };
 
 export type SitemapPathProblemReason =
-    // Not a site-relative path, so `absoluteUrl` would produce nonsense.
+    // Not a site-relative path, so `absoluteUrl` would produce nonsense. That
+    // includes a leading `//`: a protocol-relative reference to another host, and
+    // once joined to the origin, not the page's URL.
     | 'not-site-relative'
     // Still a route template such as `/guides/[id]`, which has no single URL.
     | 'unresolved-dynamic-segment'
@@ -103,7 +105,7 @@ export const sitemapPathProblems = (
 ): SitemapPathProblem[] => {
     const problems: SitemapPathProblem[] = [];
     for (const path of paths) {
-        if (!path.startsWith('/')) {
+        if (!path.startsWith('/') || path.startsWith('//')) {
             problems.push({path, reason: 'not-site-relative'});
             continue;
         }

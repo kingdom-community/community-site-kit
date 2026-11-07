@@ -57,8 +57,8 @@ describe('collectionPaths', () => {
         expect(collectionPaths('news', ['wipe-day'])).toEqual(['/news/wipe-day']);
     });
 
-    // Doubled, the slash makes `//wipe-day`: still site-relative to
-    // `sitemapPathProblems`, but not the page's URL once made absolute.
+    // Doubled, the slash makes `//wipe-day`: not the page's URL once made
+    // absolute, and refused by `sitemapPathProblems`.
     it('puts a collection at the site root when the prefix has nothing in it', () => {
         expect(collectionPaths('/', ['wipe-day'])).toEqual(['/wipe-day']);
         expect(collectionPaths('', ['wipe-day'])).toEqual(['/wipe-day']);
@@ -120,6 +120,13 @@ describe('sitemapPathProblems', () => {
     it('rejects a path that is not site-relative', () => {
         expect(sitemapPathProblems(['https://elsewhere.test/page']))
             .toEqual([{path: 'https://elsewhere.test/page', reason: 'not-site-relative'}]);
+    });
+
+    // Starting with a slash is not enough: `//wipe-day` is a protocol-relative
+    // reference to the host `wipe-day`, and made absolute it is `https://site//wipe-day`.
+    it('rejects a path that starts with two slashes', () => {
+        expect(sitemapPathProblems(['//wipe-day']))
+            .toEqual([{path: '//wipe-day', reason: 'not-site-relative'}]);
     });
 
     it('rejects a dynamic route template, which has no single canonical URL', () => {
