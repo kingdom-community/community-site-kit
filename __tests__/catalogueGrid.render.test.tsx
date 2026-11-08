@@ -160,6 +160,46 @@ describe('CatalogueGrid', () => {
         expect(screen.getByText('Nations and war.', {selector: 'p'})).toBeTruthy();
     });
 
+    // Two grids on one page listing the same item ids would otherwise mint the
+    // same heading and description ids, and the second section and its tiles
+    // would take their names from the first grid's elements.
+    it('mints its ids from idPrefix, so two grids on one page keep their own names', () => {
+        const GAMES: Item[] = [{id: 'mf', title: 'Medieval Factions', description: 'A board game.'}];
+        render(
+            <>
+                <CatalogueGrid
+                    items={ITEMS}
+                    heading="Projects"
+                    sectionId="projects"
+                    renderIcon={() => null}
+                    renderDetails={renderDetails}
+                    keepPanelsMounted
+                />
+                <CatalogueGrid
+                    items={GAMES}
+                    heading="Games"
+                    sectionId="games"
+                    idPrefix="games"
+                    renderIcon={() => null}
+                    renderDetails={renderDetails}
+                    keepPanelsMounted
+                />
+            </>
+        );
+
+        const projects = screen.getByRole('region', {name: 'Projects'});
+        const games = screen.getByRole('region', {name: 'Games'});
+        expect(projects.getAttribute('aria-labelledby')).toBe('catalogue-heading');
+        expect(games.getAttribute('aria-labelledby')).toBe('games-heading');
+
+        const describedBy = (section: HTMLElement) =>
+            within(section).getAllByTestId('catalogue-tile')[0]!.getAttribute('aria-describedby');
+        expect(describedBy(projects)).toBe('catalogue-description-mf');
+        expect(describedBy(games)).toBe('games-description-mf');
+        expect(document.getElementById('catalogue-description-mf')?.textContent).toBe('Nations and war.');
+        expect(document.getElementById('games-description-mf')?.textContent).toBe('A board game.');
+    });
+
     it('lets the details close their own panel', () => {
         grid();
         fireEvent.focus(tile('Roam'));
