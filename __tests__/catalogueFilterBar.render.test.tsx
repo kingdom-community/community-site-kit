@@ -120,4 +120,21 @@ describe('CatalogueFilterBar', () => {
         fireEvent.mouseDown(within(screen.getByTestId('facet-tech')).getByRole('combobox'));
         expect(within(screen.getByRole('listbox')).getAllByRole('option')[0]!.textContent).toBe('Any Minecraft version');
     });
+
+    // aria-controls is only useful if it names this bar's own panel; with two
+    // bars on one page sharing a prefix, both toggles would point at the first.
+    it('points its toggle at its own panel, with ids prefixed by idPrefix', () => {
+        const props = {items: ITEMS, shownCount: ITEMS.length, noun: 'projects', facets: [], query: {}, onQueryChange: () => {}};
+        render(
+            <>
+                <CatalogueFilterBar {...props}/>
+                <CatalogueFilterBar {...props} idPrefix="games"/>
+            </>
+        );
+
+        const toggles = screen.getAllByRole('button', {name: /search & filter/i});
+        const panels = screen.getAllByTestId('catalogue-filters');
+        expect(toggles.map((t) => t.getAttribute('aria-controls'))).toEqual(['catalogue-filters', 'games-filters']);
+        expect(panels.map((p) => p.id)).toEqual(['catalogue-filters', 'games-filters']);
+    });
 });

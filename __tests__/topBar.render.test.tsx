@@ -244,4 +244,16 @@ describe('TopBar', () => {
         render(<TopBar brand="Ember Hollow" ariaLabel="Site"/>);
         expect(screen.getByRole('navigation', {name: 'Site'})).toBeTruthy();
     });
+
+    // The hamburger is an icon with no visible text, so its label is the only
+    // name it has; a site not written in English has to be able to replace it.
+    it('names the hamburger with menuButtonLabel instead of the default', async () => {
+        const user = userEvent.setup();
+        render(<TopBar brand="Ember Hollow" links={LINKS} menuButtonLabel="Menü öffnen"/>);
+
+        expect(screen.queryByRole('button', {name: 'Open navigation menu'})).toBeNull();
+        await user.click(screen.getByRole('button', {name: 'Menü öffnen'}));
+
+        expect(within(screen.getByRole('presentation')).getByText('News')).toBeTruthy();
+    });
 });
