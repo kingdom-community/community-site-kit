@@ -58,6 +58,12 @@ Tiles exist because `strata-imgcmp` compares only images of the same size. A pag
 
 `--max-fraction 0` means any changed pixel counts. Strata's own 0.5 % default is tuned for 3D frames. In the RFC's spike it let a visible heading change through on 7 of 8 tall pages, and two renders of the same commit differed by 0 pixels.
 
+### What a changed tile looks like
+
+![Three panels of the fixture page: the base with a blue heading, the head with a red heading, and the diff with only the heading painted bright red on a dimmed base](../../docs/images/visual-diff-example.png)
+
+*The self-test's heading-colour change (`h1` blue to `#c0392b` in `fixture/site/style.css`), tile 0 of `home.desktop.light`, cropped to its top 270 rows: base, head, and the `strata-imgcmp` diff image from the `visual-diff` artifact. Only the heading's pixels are over ΔE 4 (2,714 pixels, 0.57 % of the tile, largest ΔE 110), so they are red, and everything else is the dimmed base. The shot is reported as `changed` and the check still passes. Redrawn by `VISUAL_DIFF_KEEP=1 node tools/visual-diff/test.cjs`, then `node tools/visual-diff/readme-image.cjs <kept dir> docs/images/visual-diff-example.png`.*
+
 ## The config
 
 [`schema.json`](schema.json) describes it, and every key is optional. An unknown key is an error, so a typo fails the run instead of silently taking no shots.
@@ -132,6 +138,7 @@ node $T/side.cjs stop --dir ../site-base; node $T/side.cjs stop --dir .
 | `compare.cjs` | Downloads and verifies `strata-imgcmp`, compares, and writes `report.json`, `summary.md` and `images/`. |
 | `strata.lock.json` | The Strata release: version, asset URL and SHA-256 from its `SHA256SUMS`. Bump every field together. |
 | `schema.json` | The site config schema. |
+| `readme-image.cjs` | Draws the example image above from a kept self-test run. A docs tool; CI does not run it. |
 | `test.cjs`, `fixture/` | The end-to-end self-test run by the kit's `visual-diff` CI job. It covers an unchanged head, a heading change, a flaky retake, a page that grows, a page that fails to load, and a base that does not build. |
 
 The pure helpers are unit-tested in `__tests__/visualDiff.test.ts`.
