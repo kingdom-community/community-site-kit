@@ -1,0 +1,7 @@
+{
+  "comment": "The Strata release whose bin/strata-imgcmp compare.cjs runs. Change only by bumping every field together; sha256 is copied from the release's SHA256SUMS.",
+  "version": "0.7.0",
+  "asset": "strata-0.7.0-linux-x64.tar.gz",
+  "url": "https://github.com/Preponderous-Software/strata/releases/download/v0.7.0/strata-0.7.0-linux-x64.tar.gz",
+  "sha256": "a4d2a3b05a2c576c87dc00e92ca0ab81e05bc814899fb456734da2b8eeb80680"
+}

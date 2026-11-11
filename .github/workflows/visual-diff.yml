@@ -1,0 +1,181 @@
+name: Visual diff
+
+# Reusable visual diff for a site's pull requests (RFC 0038, advisory). A site
+# calls it from its own workflow, pinned by commit SHA:
+#
+#   on:
+#     pull_request:
+#   permissions:
+#     contents: read
+#   jobs:
+#     visual-diff:
+#       uses: kingdom-community/community-site-kit/.github/workflows/visual-diff.yml@<kit sha>
+#       with:
+#         kit-ref: <the same kit sha>
+#
+# It builds and serves the pull request's base and head on this one runner, takes
+# the same Playwright shots of each (tools/visual-diff/shoot.cjs), compares every
+# tile pair with strata-imgcmp from the SHA-pinned Strata release
+# (tools/visual-diff/compare.cjs) and writes the result to the job summary and a
+# `visual-diff` artifact. Changed shots never fail the job; an error does (a head
+# page that fails to load, a failed base build, a broken comparison).
+on:
+  workflow_call:
+    inputs:
+      config:
+        description: The site's visual-diff.json, relative to the repository root.
+        type: string
+        default: visual-diff.json
+      kit-ref:
+        description: The community-site-kit commit to take tools/visual-diff from. Use the same SHA as the `uses:` line.
+        type: string
+        required: true
+      playwright-version:
+        description: Playwright, installed outside the site's package.json. Chromium comes with it.
+        type: string
+        default: '1.61.1'
+      base-sha:
+        description: Overrides the base commit (default the pull request's base).
+        type: string
+        default: ''
+      head-sha:
+        description: Overrides the head commit (default the pull request's merge commit).
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  visual-diff:
+    name: Visual diff (advisory)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      BASE_SHA: ${{ inputs.base-sha || github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ inputs.head-sha || github.sha }}
+      CONFIG: ${{ github.workspace }}/head/${{ inputs.config }}
+      TOOL: ${{ github.workspace }}/visual-diff-kit/tools/visual-diff
+      BASE_PORT: '3101'
+      HEAD_PORT: '3102'
+    steps:
+      - name: Need a base commit
+        run: |
+          if [ -z "$BASE_SHA" ]; then
+            echo "::error::No base commit: call this workflow from a pull_request event or pass base-sha."
+            exit 1
+          fi
+          # Shots, reports and Playwright go under the runner's temp directory:
+          # nothing here belongs in either checkout.
+          echo "VD=$RUNNER_TEMP/visual-diff" >> "$GITHUB_ENV"
+          echo "NODE_PATH=$RUNNER_TEMP/visual-diff/pw/node_modules" >> "$GITHUB_ENV"
+
+      - name: Check out the head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          path: head
+          persist-credentials: false
+
+      - name: Check out the base
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BASE_SHA }}
+          path: base
+          persist-credentials: false
+
+      - name: Check out tools/visual-diff
+        uses: actions/checkout@v4
+        with:
+          repository: kingdom-community/community-site-kit
+          ref: ${{ inputs.kit-ref }}
+          path: visual-diff-kit
+          sparse-checkout: tools/visual-diff
+          persist-credentials: false
+
+      - name: Read the site config
+        id: config
+        run: |
+          node -e '
+            const c = require(process.env.TOOL + "/lib.cjs").loadConfig(process.env.CONFIG);
+            const n = Object.keys(c.viewports).length * c.schemes.length * c.pages.length;
+            console.log(`${c.pages.length} pages x ${Object.keys(c.viewports).length} viewports x ${c.schemes.length} schemes = ${n} shots`);
+            require("fs").appendFileSync(process.env.GITHUB_OUTPUT, `node=${c.node}\n`);
+          '
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.config.outputs.node }}
+
+      - name: Cache the npm download cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: visual-diff-npm-${{ runner.os }}-${{ hashFiles('base/package-lock.json', 'head/package-lock.json') }}
+          restore-keys: visual-diff-npm-${{ runner.os }}-
+
+      - name: Install Playwright ${{ inputs.playwright-version }} (outside the site)
+        run: |
+          mkdir -p "$VD/pw"
+          npm install --no-save --no-package-lock --no-audit --no-fund --prefix "$VD/pw" "playwright@${{ inputs.playwright-version }}"
+          "$VD/pw/node_modules/.bin/playwright" install --with-deps chromium
+
+      - name: Build the base
+        id: build-base
+        continue-on-error: true
+        run: node "$TOOL/side.cjs" build --config "$CONFIG" --dir base
+
+      - name: Build the head
+        run: node "$TOOL/side.cjs" build --config "$CONFIG" --dir head
+
+      - name: Serve both
+        run: |
+          if [ "${{ steps.build-base.outcome }}" = success ]; then
+            node "$TOOL/side.cjs" serve --config "$CONFIG" --dir base --port "$BASE_PORT" --log "$VD/serve-base.log"
+          fi
+          node "$TOOL/side.cjs" serve --config "$CONFIG" --dir head --port "$HEAD_PORT" --log "$VD/serve-head.log"
+
+      - name: Shoot
+        run: |
+          if [ "${{ steps.build-base.outcome }}" = success ]; then
+            node "$TOOL/shoot.cjs" --config "$CONFIG" --url "http://127.0.0.1:$BASE_PORT" --out "$VD/shots/base"
+          fi
+          node "$TOOL/shoot.cjs" --config "$CONFIG" --url "http://127.0.0.1:$HEAD_PORT" --out "$VD/shots/head"
+
+      - name: Compare with strata-imgcmp
+        run: |
+          if [ "${{ steps.build-base.outcome }}" = success ]; then
+            base=(--base "$VD/shots/base")
+          else
+            base=(--base-error "base build failed (${BASE_SHA:0:7}); only head shots are reported")
+          fi
+          # First pass: which shots differ. Each one is retaken once on both
+          # sides; one that no longer differs is reported as flaky.
+          GITHUB_STEP_SUMMARY= node "$TOOL/compare.cjs" --config "$CONFIG" "${base[@]}" \
+            --head "$VD/shots/head" --out "$VD/first" > /dev/null || true
+          retake=()
+          ids="$(tr -d '\n' < "$VD/first/retake.txt" 2>/dev/null || true)"
+          if [ -n "$ids" ] && [ "${{ steps.build-base.outcome }}" = success ]; then
+            echo "Retaking: $ids"
+            node "$TOOL/shoot.cjs" --config "$CONFIG" --url "http://127.0.0.1:$BASE_PORT" --out "$VD/retake/base" --only "$ids"
+            node "$TOOL/shoot.cjs" --config "$CONFIG" --url "http://127.0.0.1:$HEAD_PORT" --out "$VD/retake/head" --only "$ids"
+            retake=(--retake-base "$VD/retake/base" --retake-head "$VD/retake/head")
+          fi
+          node "$TOOL/compare.cjs" --config "$CONFIG" "${base[@]}" --head "$VD/shots/head" \
+            --out "$VD/report" "${retake[@]}"
+
+      - name: Stop the servers
+        if: always()
+        run: |
+          node "$TOOL/side.cjs" stop --dir base || true
+          node "$TOOL/side.cjs" stop --dir head || true
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diff
+          path: |
+            ${{ env.VD }}/report/
+            ${{ env.VD }}/serve-*.log
+          if-no-files-found: ignore

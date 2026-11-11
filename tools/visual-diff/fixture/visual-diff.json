@@ -1,0 +1,15 @@
+{
+  "$schema": "../schema.json",
+  "comment": "The self-test's config (test.cjs). The fixture site needs no install or build.",
+  "install": "true",
+  "build": "true",
+  "serve": "node server.cjs {port}",
+  "pages": ["/", "/tall"],
+  "viewports": {
+    "desktop": { "width": 800, "height": 600 },
+    "phone": { "width": 390, "height": 844, "isMobile": true, "hasTouch": true }
+  },
+  "schemes": ["light", "dark"],
+  "localStorage": { "fixture-seen": "yes" },
+  "fixtures": { "https://api.example.invalid/v1/": "api" }
+}

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kingdom-community/community-site-kit/blob/main/tools/visual-diff/schema.json",
+  "title": "visual-diff site config",
+  "description": "A site's visual-diff.json. Every key is optional; lib.cjs DEFAULTS fills in the rest, and an unknown key is an error.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "comment": { "type": "string", "description": "Ignored." },
+    "node": { "type": "string", "default": "18", "description": "Node version for actions/setup-node, used for the site's install, build and serve and for the tool." },
+    "install": { "type": "string", "default": "npm ci", "description": "Run in each checkout before build." },
+    "build": { "type": "string", "default": "npm run build" },
+    "serve": { "type": "string", "pattern": "\\{port\\}", "default": "npx next start -p {port}", "description": "Started in the background; {port} is replaced." },
+    "env": { "type": "object", "additionalProperties": { "type": "string" }, "default": {}, "description": "Set for install, build and serve." },
+    "pages": {
+      "type": "array", "minItems": 1, "default": ["/"],
+      "items": { "type": "string", "pattern": "^/(?!/)" },
+      "description": "Site-relative paths to shoot."
+    },
+    "viewports": {
+      "type": "object", "minProperties": 1,
+      "propertyNames": { "pattern": "^[a-z0-9-]+$" },
+      "additionalProperties": {
+        "type": "object", "additionalProperties": false, "required": ["width", "height"],
+        "properties": {
+          "width": { "type": "integer", "minimum": 100, "maximum": 4000 },
+          "height": { "type": "integer", "minimum": 100, "maximum": 4000, "description": "Also the tile height." },
+          "isMobile": { "type": "boolean" },
+          "hasTouch": { "type": "boolean" }
+        }
+      }
+    },
+    "schemes": {
+      "type": "array", "minItems": 1, "default": ["light", "dark"],
+      "items": { "enum": ["light", "dark"] },
+      "description": "prefers-color-scheme values to shoot."
+    },
+    "clock": { "type": "string", "format": "date-time", "default": "2026-01-01T12:00:00Z", "description": "Date.now() and new Date() return this in the page." },
+    "localStorage": { "type": "object", "additionalProperties": { "type": "string" }, "default": {}, "description": "Set on the site's origin before every page loads." },
+    "mask": { "type": "array", "items": { "type": "string", "minLength": 1 }, "default": [], "description": "CSS selectors painted over as solid boxes." },
+    "fixtures": {
+      "type": "object", "default": {},
+      "propertyNames": { "pattern": "^https?://" },
+      "additionalProperties": { "type": "string" },
+      "description": "URL prefix -> directory (relative to this file) of canned responses; everything else off the site's origin is blocked."
+    },
+    "threshold": { "type": "number", "exclusiveMinimum": 0, "default": 4.0, "description": "strata-imgcmp --threshold (CIE76 ΔE)." },
+    "maxFraction": { "type": "number", "minimum": 0, "maximum": 1, "default": 0, "description": "strata-imgcmp --max-fraction." }
+  }
+}

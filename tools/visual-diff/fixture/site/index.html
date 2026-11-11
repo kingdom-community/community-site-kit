@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fixture home</title>
+<!-- Off-origin: blocked by shoot.cjs, so both sides render the fallback font. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter&display=swap">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+<h1>Visual diff fixture</h1>
+<p>Rendered at <span id="now"></span> (the clock is frozen, so this never changes).</p>
+<p id="api">API: loading</p>
+<div class="spinner" aria-hidden="true"></div>
+<p>Seen before: <span id="seen"></span></p>
+</main>
+<script>
+document.getElementById('now').textContent = new Date().toISOString();
+document.getElementById('seen').textContent = localStorage.getItem('fixture-seen') || 'no';
+fetch('https://api.example.invalid/v1/status').then(function (r) { return r.json(); })
+    .then(function (j) { document.getElementById('api').textContent = 'API: ' + j.status; })
+    .catch(function () { document.getElementById('api').textContent = 'API: unavailable'; });
+</script>
+</body>
+</html>

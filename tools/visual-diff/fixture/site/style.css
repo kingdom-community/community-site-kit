@@ -1,0 +1,8 @@
+:root { color-scheme: light dark; --bg: #f7f7f2; --fg: #1d1d1f; --accent: #2f5bd8; }
+@media (prefers-color-scheme: dark) { :root { --bg: #15161a; --fg: #e8e8ea; --accent: #7aa2f7; } }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 sans-serif; }
+main { padding: 24px; }
+h1 { color: var(--accent); margin: 0 0 16px; }
+.spinner { width: 40px; height: 40px; background: var(--accent); animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.row { height: 120px; margin: 12px 0; border-radius: 8px; background: color-mix(in srgb, var(--accent) 20%, transparent); }

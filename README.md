@@ -525,6 +525,17 @@ npm run typecheck
 npm run build
 ```
 
+## Visual diff for pull requests
+
+[`tools/visual-diff`](tools/visual-diff/README.md) is an advisory pull-request
+check that a site calls as a reusable workflow
+(`.github/workflows/visual-diff.yml`). It builds and serves the base and the
+head on one runner, takes the same Playwright shots of each, and compares them
+with `strata-imgcmp` from a SHA-pinned
+[Strata](https://github.com/Preponderous-Software/strata) release. Like
+`tools/og-card`, it is not part of the npm package and adds nothing to a site's
+`package.json`.
+
 ## Origins
 
 Extracted from the website and infrastructure stack behind a Minecraft community
