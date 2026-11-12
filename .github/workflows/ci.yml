@@ -53,3 +53,22 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libegl1 libgl1-mesa-dri fonts-dejavu-core
       - run: pip install -r requirements.txt
       - run: python -m unittest -v
+
+  visual-diff:
+    # tools/visual-diff (RFC 0038): shoots the fixture site as base and as several
+    # heads with Playwright and compares them with the SHA-pinned strata-imgcmp.
+    # Playwright is installed outside package.json, as the reusable workflow does.
+    runs-on: ubuntu-24.04
+    env:
+      PLAYWRIGHT_VERSION: '1.61.1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund --prefix "$RUNNER_TEMP/pw" "playwright@$PLAYWRIGHT_VERSION"
+          "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Self-test
+        run: NODE_PATH="$RUNNER_TEMP/pw/node_modules" node tools/visual-diff/test.cjs
