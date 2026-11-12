@@ -56,9 +56,13 @@ export const absoluteUrl = (baseUrl: string, path: string): string => {
 // require — Discord, Twitter/X and friends will not follow a site-relative path.
 // Accepts either a path under `public/` ("/social-card.png", the usual case,
 // resolved against the base URL) or an already-absolute URL, which is passed
-// through so a page can point at an externally hosted image. Returns null when
-// there is no image to advertise, so the caller omits the tag rather than
-// emitting an empty one.
+// through so a page can point at an externally hosted image. A protocol-relative
+// URL ("//cdn.example/card.png") names another host, not a path under `public/`,
+// so it is given the scheme of `baseUrl` — the one a browser on the site's own
+// pages would use — or `https:` when `baseUrl` carries none; joining it to the
+// origin instead would advertise a URL on the site that does not exist. Returns
+// null when there is no image to advertise, so the caller omits the tag rather
+// than emitting an empty one.
 export const socialImageUrl = (baseUrl: string, image: string | null | undefined): string | null => {
     if (!image) {
         return null;
@@ -69,6 +73,10 @@ export const socialImageUrl = (baseUrl: string, image: string | null | undefined
     }
     if (/^https?:\/\//i.test(trimmed)) {
         return trimmed;
+    }
+    if (trimmed.startsWith('//')) {
+        const scheme = /^(https?:)\/\//i.exec(baseUrl.trim())?.[1] ?? 'https:';
+        return `${scheme}${trimmed}`;
     }
     return absoluteUrl(baseUrl, trimmed.startsWith('/') ? trimmed : `/${trimmed}`);
 };

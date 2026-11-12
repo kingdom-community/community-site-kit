@@ -69,6 +69,16 @@ describe('socialImageUrl', () => {
         expect(socialImageUrl('https://example.test', 'HTTPS://cdn.test/x.png')).toBe('HTTPS://cdn.test/x.png');
         expect(socialImageUrl('https://example.test', 'http://cdn.test/x.png')).toBe('http://cdn.test/x.png');
     });
+
+    // A leading `//` names another host, not a path under public/. Joined to the
+    // origin it became `https://example.test//cdn.test/x.png`, a page on the site
+    // that does not exist, so every shared link showed a broken preview.
+    it('gives a protocol-relative image the base URL\'s scheme rather than treating it as a path', () => {
+        expect(socialImageUrl('https://example.test', '//cdn.test/x.png')).toBe('https://cdn.test/x.png');
+        expect(socialImageUrl('http://localhost:3000', '//cdn.test/x.png')).toBe('http://cdn.test/x.png');
+        expect(socialImageUrl('  HTTPS://example.test/ ', ' //cdn.test/x.png ')).toBe('HTTPS://cdn.test/x.png');
+        expect(socialImageUrl('example.test', '//cdn.test/x.png')).toBe('https://cdn.test/x.png');
+    });
 });
 
 describe('siteBaseUrl', () => {
