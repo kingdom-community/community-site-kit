@@ -25,6 +25,15 @@ On its first run the tool downloads the Strata release named in [`strata.lock.js
 
 `--check` renders the card again and exits 1 if the committed PNG differs.
 
+Several specs can be passed at once. Files ending in `.provenance.json` are skipped, so a glob such as `og-card/*.json` can be passed without listing the tool's own output. The run stops at the first spec that fails, with one of these exit statuses:
+
+| Status | Meaning |
+|---|---|
+| 0 | Every card was written (or, with `--check`, matched). |
+| 1 | A render failed or came out blank, or `--check` found a difference. |
+| 2 | The spec is invalid or unreadable, or the DejaVu fonts are not installed. Bad command-line arguments also exit 2. |
+| 3 | The `strata-engine` binding is not installed, or the Strata library, EGL or Mesa could not be loaded. |
+
 ## The card spec
 
 A site keeps one JSON file per card, next to whatever it documents. Paths in it are relative to the file.
@@ -46,7 +55,7 @@ A site keeps one JSON file per card, next to whatever it documents. Paths in it 
 
 | Key | Required | Meaning |
 |---|---|---|
-| `output` | yes | Where the PNG is written. |
+| `output` | yes | Where the PNG is written. It must end in `.png`. |
 | `scene` | yes | One of the scenes below. |
 | `title` | yes | The large line. It shrinks to fit the left column. |
 | `url` | yes | The address shown at the bottom left. |
