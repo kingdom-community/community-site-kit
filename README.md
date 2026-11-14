@@ -66,8 +66,15 @@ system's `prefers-color-scheme` second — in an effect after hydration. That is
 what stops a page painting in one theme and repainting in the other a moment
 later. Pick the `defaultMode` most of your visitors use.
 
+Every prop is optional. Left out, `defaultMode` is `'dark'`, `storageKey` is
+`'community-site-color-mode'` (`DEFAULT_COLOR_MODE_STORAGE_KEY`), and `theme` is
+MUI's own default theme in the requested mode. The provider also renders MUI's
+`CssBaseline`, since the themed page background is part of what a colour mode
+changes; pass `cssBaseline={false}` if your app already renders its own.
+
 `SkipLink` is the first focusable element on the page; render your page's content
-inside `<main id="main">` for it to land on.
+inside `<main id="main">` for it to land on. If your main element has another id,
+pass it as `targetId`; `label` replaces the default "Skip to main content" text.
 
 The provider also stamps the mode in effect onto `<html>` as
 `data-color-mode="light|dark"`, and sets the document's `color-scheme`, so plain
@@ -160,6 +167,9 @@ Below the `md` breakpoint the top bar collapses into a hamburger drawer. Pass
 
 Both bars render a colour-mode toggle by default, so a page using both of the
 bars above shows two. Pass `colorModeToggle={false}` to whichever bar should not carry one.
+To put the switch somewhere else, such as a settings page, render `<ColorModeToggle/>`
+anywhere inside the provider. Its accessible name defaults to "Toggle dark mode";
+pass `aria-label` to change it.
 
 ### 3. Per-page metadata
 
@@ -293,6 +303,10 @@ export default function NotFound() {
     );
 }
 ```
+
+The home button links to `homeHref` (default `/`) and reads `homeLabel` (default
+"Back to home"). The message sits in a `<main>` whose id is `mainId` (default
+`main`), so a `SkipLink` given a different `targetId` needs the same value here.
 
 ### 6. Degraded states
 
