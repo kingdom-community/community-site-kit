@@ -163,7 +163,18 @@ is also set in bold and underlined, never marked by colour alone; the drawer
 keeps MUI's selected-item background on top of that. The bottom bar marks no link.
 
 Below the `md` breakpoint the top bar collapses into a hamburger drawer. Pass
-`responsive={false}` if you would rather it did not.
+`responsive={false}` if you would rather it did not. The hamburger button's
+accessible name defaults to "Open navigation menu"; pass `menuButtonLabel` to
+change it. A bar with no `links` and no `menus` shows no hamburger at all.
+
+The `brand` links to `brandHref` (default `/`). The top bar's `<nav>` landmark is
+named by `ariaLabel` (default "Primary") and the bottom bar's `<footer>` landmark
+by its own `ariaLabel` (default "Footer"); give each landmark a distinct name if
+the page has more than one of a kind.
+
+The bottom bar renders `version` as "v1.4.0" and leaves the label out entirely
+when no `version` is passed. Anything passed as `children` — a visitor counter, a
+status pill — sits beside the version.
 
 Both bars render a colour-mode toggle by default, so a page using both of the
 bars above shows two. Pass `colorModeToggle={false}` to whichever bar should not carry one.
@@ -428,6 +439,11 @@ details holding state worth keeping (a Like), and describes each tile by its ite
 filters the grid behind the sheet, say. A filter-bar facet entry's `anyLabel` (beside `facet` and `display`)
 overrides the default "Any <label>" choice where lower-casing the label is wrong ("Any version" for
 "Minecraft version").
+
+`CatalogueGrid` and `CatalogueFilterBar` each take an `idPrefix` (default
+`catalogue`) for the element ids they mint. A page with two grids, or two filter
+bars, must give each its own, or their ids collide. `TieredCatalogueGrid` takes
+no `idPrefix`: it gives each tier's grid `<sectionId>-<tier key>`.
 
 `CatalogueFilterBar` folds search, sort and facet filters behind one "Search &
 filter" button, unfolds by itself while a filter is active, and says "Showing N
