@@ -214,9 +214,28 @@ a `http://localhost:3000` one after hydration
 ([#47](https://github.com/kingdom-community/community-site-kit/issues/47)).
 An unset or empty variable falls back to `siteBaseUrl()`, the same as passing no
 `baseUrl`.
-Pass `path={null}` on
-an error page: it stands in for a URL that is not a real page, so it must not
-claim a canonical one.
+
+A page's title is `title`, then `titleSeparator` (default `' — '`), then the
+site name, so the example above reads "News — Ember Hollow"; a page with no
+`title`, such as the home page, is titled with the site name alone. A page with
+no `description` uses the site-wide one.
+
+The canonical URL and `og:url` point at the current route, with its query
+string, fragment and any trailing slash removed. A page that resolves a dynamic
+segment on the client should pass the concrete `path` once it knows it: until
+then the route still reads `/guides/[id]`, and no canonical URL is emitted for
+it. Pass `path={null}` on an error page: it stands in for a URL that is not a
+real page, so it must not claim a canonical one.
+
+Each page shows the site-wide `socialImage` unless it passes its own `image` —
+a path under `public/` or an absolute URL — with `imageAlt` to describe it, or
+`image={null}` for no image at all. `socialImageWidth` and `socialImageHeight`
+are emitted for the site-wide card only, since they would misdescribe any other
+image. With no image either way, no `og:image` is emitted and the Twitter card
+falls back from `summary_large_image` to `summary`, so leave `socialImage` unset
+until the card exists: a preview pointing at a missing file is worse than none. `type` sets `og:type` (default `website`;
+`article` suits a news post), and any `children` are rendered into the same
+`<head>` block as extra tags.
 
 The social card itself can be drawn by [`tools/og-card`](tools/og-card/README.md),
 a Python tool that renders a small 3D scene with
