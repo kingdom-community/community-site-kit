@@ -233,9 +233,9 @@ a path under `public/` or an absolute URL — with `imageAlt` to describe it, or
 are emitted for the site-wide card only, since they would misdescribe any other
 image. With no image either way, no `og:image` is emitted and the Twitter card
 falls back from `summary_large_image` to `summary`, so leave `socialImage` unset
-until the card exists: a preview pointing at a missing file is worse than none. `type` sets `og:type` (default `website`;
-`article` suits a news post), and any `children` are rendered into the same
-`<head>` block as extra tags.
+until the card exists: a preview pointing at a missing file is worse than none.
+`type` sets `og:type` (default `website`; `article` suits a news post), and any
+`children` are rendered into the same `<head>` block as extra tags.
 
 The social card itself can be drawn by [`tools/og-card`](tools/og-card/README.md),
 a Python tool that renders a small 3D scene with
