@@ -182,6 +182,40 @@ To put the switch somewhere else, such as a settings page, render `<ColorModeTog
 anywhere inside the provider. Its accessible name defaults to "Toggle dark mode";
 pass `aria-label` to change it.
 
+`ColorModeToggle` and both bars always draw the built-in sun and moon icons,
+which are inlined, so the switch needs no files copied into `public/`. For other
+icons, build a switch with `createColorModeToggleSwitch({lightIconUrl,
+darkIconUrl})` — the icon shown in light mode and in dark mode, each a URL or a
+data URI, with either one left out keeping its default — and wire it to
+`ColorModeContext` yourself, giving it an accessible name as `ColorModeToggle`
+does. `ColorModeToggleSwitch` is the same switch with the built-in icons and no
+wiring.
+
+```tsx
+import {useContext} from 'react';
+import {ColorModeContext, createColorModeToggleSwitch} from '@kingdom-community/community-site-kit';
+
+const LanternSwitch = createColorModeToggleSwitch({darkIconUrl: '/icons/lantern.svg'});
+
+export const LanternToggle = () => {
+    const {mode, toggleColorMode} = useContext(ColorModeContext);
+    return (
+        <LanternSwitch
+            checked={mode === 'dark'}
+            onChange={toggleColorMode}
+            inputProps={{'aria-label': 'Toggle dark mode'}}
+        />
+    );
+};
+```
+
+For your own MUI buttons and links that navigate within the site, pass
+`component={NextLinkComposed}` and give the destination as `to`, not `href`:
+`<Button component={NextLinkComposed} to="/guides">Guides</Button>`. The kit's own
+components use it for their in-site links. `linkAs`, `replace`, `scroll`,
+`shallow`, `prefetch` and `locale` are passed through to `next/link`; any other
+prop goes onto the anchor.
+
 ### 3. Per-page metadata
 
 ```tsx
