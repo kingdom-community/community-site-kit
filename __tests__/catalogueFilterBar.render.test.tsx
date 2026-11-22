@@ -33,7 +33,11 @@ const SORTS: CatalogueSortOption<Item>[] = [
 ];
 
 // A page as a site would write one: it owns the state and runs the helpers.
-const Page: React.FC<{initial?: CatalogueQuery; anyLabel?: string}> = ({initial = {}, anyLabel}) => {
+const Page: React.FC<{initial?: CatalogueQuery; anyLabel?: string; orientation?: 'horizontal' | 'vertical'}> = ({
+    initial = {},
+    anyLabel,
+    orientation
+}) => {
     const [query, setQuery] = React.useState<CatalogueQuery>(initial);
     const [sortKey, setSortKey] = React.useState('title');
     const shown = filterCatalogue(ITEMS, [category, tech], query);
@@ -49,6 +53,7 @@ const Page: React.FC<{initial?: CatalogueQuery; anyLabel?: string}> = ({initial 
                 sortOptions={SORTS}
                 sortKey={sortKey}
                 onSortChange={setSortKey}
+                orientation={orientation}
             />
             <ul data-testid="shown">{shown.map((i) => <li key={i.id}>{i.title}</li>)}</ul>
             <output data-testid="sort">{sortKey}</output>
@@ -136,5 +141,57 @@ describe('CatalogueFilterBar', () => {
         const panels = screen.getAllByTestId('catalogue-filters');
         expect(toggles.map((t) => t.getAttribute('aria-controls'))).toEqual(['catalogue-filters', 'games-filters']);
         expect(panels.map((p) => p.id)).toEqual(['catalogue-filters', 'games-filters']);
+    });
+
+    describe("in orientation 'vertical'", () => {
+        it('is always open, with no fold toggle, as a named search landmark', () => {
+            render(<Page orientation="vertical"/>);
+            expect(screen.queryByRole('button', {name: /search & filter/i})).toBeNull();
+            const bar = screen.getByRole('search', {name: 'Search and filter projects'});
+            expect(bar.id).toBe('catalogue-filters');
+            expect(within(bar).getByRole('textbox', {name: 'Search projects'})).toBeTruthy();
+        });
+
+        it('stacks search first, then each facet, then the sort menu last', () => {
+            render(<Page orientation="vertical"/>);
+            const bar = screen.getByTestId('catalogue-filters');
+            const order = Array.from(bar.children, (child) => {
+                if (child.querySelector('input[aria-label="Search projects"]')) return 'search';
+                if (child.getAttribute('role') === 'group') return `group:${child.textContent?.split('Any')[0]}`;
+                if (child.querySelector('[data-testid="facet-tech"]')) return 'menu:tech';
+                if (child.querySelector('[data-testid="catalogue-sort"]')) return 'sort';
+                return 'other';
+            });
+            expect(order).toEqual(['search', 'group:Category', 'menu:tech', 'sort']);
+        });
+
+        it('labels each chip facet by a visible heading and filters from its chips', () => {
+            render(<Page orientation="vertical"/>);
+            const group = screen.getByRole('group', {name: 'Category'});
+            const chips = within(group).getAllByRole('button');
+            expect(chips.map((c) => c.textContent)).toEqual(['Any category', 'Games', 'Libraries']);
+            fireEvent.click(chips[1]!);
+            expect(shown()).toEqual(['Alpha', 'Gamma']);
+            expect(screen.getByTestId('filter-summary').textContent).toBe('Showing 2 of 3 projects');
+            fireEvent.click(chips[1]!);
+            expect(shown()).toHaveLength(3);
+        });
+
+        it('searches, and filters from a menu facet, through the same query contract', () => {
+            render(<Page orientation="vertical"/>);
+            fireEvent.change(screen.getByRole('textbox', {name: 'Search projects'}), {target: {value: 'a'}});
+            fireEvent.mouseDown(within(screen.getByTestId('facet-tech')).getByRole('combobox'));
+            fireEvent.click(screen.getByRole('option', {name: 'Java'}));
+            expect(shown()).toEqual(['Beta', 'Gamma']);
+        });
+
+        it('changes the sort order from its menu', () => {
+            render(<Page orientation="vertical"/>);
+            fireEvent.mouseDown(within(screen.getByTestId('catalogue-sort')).getByRole('combobox'));
+            const options = within(screen.getByRole('listbox')).getAllByRole('option').map((o) => o.textContent);
+            expect(options).toEqual(['A–Z', 'Z–A']);
+            fireEvent.click(screen.getByRole('option', {name: 'Z–A'}));
+            expect(screen.getByTestId('sort').textContent).toBe('reverse');
+        });
     });
 });

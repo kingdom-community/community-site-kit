@@ -29,6 +29,11 @@ const CloseIcon = interopDefault(CloseIconImport);
 // bottom sheet instead. The grid owns which one is open, so opening one closes
 // the rest; grids that read as one catalogue share that through
 // CatalogueOpenContext.
+//
+// A page can also hold the open item itself (openId and onOpenChange), and,
+// with detailsMode 'external', show the open item's details somewhere of its
+// own — a pane pinned beside the grid — instead of the panel. A touch screen
+// keeps its bottom sheet either way: a pinned pane is a wide-screen layout.
 
 // A short wait before opening, so sweeping the pointer across the grid does
 // not flash a panel under every icon it passes, and a slightly longer one
@@ -45,6 +50,37 @@ export const TOUCH_ONLY_QUERY = '(hover: none)';
 // provider each grid holds its own state, which is all a lone grid needs.
 type CatalogueOpenState = [string | null, React.Dispatch<React.SetStateAction<string | null>>];
 export const CatalogueOpenContext = React.createContext<CatalogueOpenState | null>(null);
+
+// The open item, held here unless the page passes openId (controlled), and
+// reported to onOpenChange whenever it changes either way. Internal, like the
+// context it feeds.
+export const useCatalogueOpenState = (
+    openId: string | null | undefined,
+    onOpenChange: ((id: string | null) => void) | undefined
+): CatalogueOpenState => {
+    const [ownOpenId, setOwnOpenId] = React.useState<string | null>(null);
+    const controlled = openId !== undefined;
+    const current = controlled ? openId : ownOpenId;
+    // Read through refs so the setter stays stable across renders, and so two
+    // updates in one event (a close timer and an open) see each other.
+    const currentRef = React.useRef(current);
+    currentRef.current = current;
+    const onOpenChangeRef = React.useRef(onOpenChange);
+    onOpenChangeRef.current = onOpenChange;
+    const setOpenId = React.useCallback<CatalogueOpenState[1]>((action) => {
+        const previous = currentRef.current;
+        const next = typeof action === 'function' ? action(previous) : action;
+        if (next === previous) return;
+        currentRef.current = next;
+        if (!controlled) setOwnOpenId(next);
+        onOpenChangeRef.current?.(next);
+    }, [controlled]);
+    return [current, setOpenId];
+};
+
+// 'panel' shows the details in the grid's own panel (or sheet); 'external'
+// leaves them to the page on a screen that can hover.
+export type CatalogueDetailsMode = 'panel' | 'external';
 
 export interface CatalogueGridItem {
     id: string;
@@ -90,6 +126,18 @@ export interface CatalogueGridProps<T extends CatalogueGridItem> {
     // openings — a Like and its sign-in notice — and so each tile can be
     // described by its item's description (aria-describedby) at all times.
     keepPanelsMounted?: boolean;
+    // The open item's id, for a page that holds it itself (null: none open).
+    // Without it, the grid holds its own.
+    openId?: string | null;
+    // Called with the item that opens, or null when it closes — whether or
+    // not openId is given.
+    onOpenChange?: (id: string | null) => void;
+    // 'panel' (the default) opens the details under the tile. 'external'
+    // renders no panel on a screen that can hover: a click or Enter selects
+    // the tile and marks it open, a second one deselects it, hover and focus
+    // open nothing, and the page shows the open item's details itself (from
+    // openId/onOpenChange). A touch screen still opens the bottom sheet.
+    detailsMode?: CatalogueDetailsMode;
     // Extra sx for the section.
     sx?: Mui.SxProps<Mui.Theme>;
 }
@@ -105,6 +153,7 @@ interface TileProps<T extends CatalogueGridItem> {
     href?: string;
     idPrefix: string;
     keepMounted: boolean;
+    external: boolean;
 }
 
 const CatalogueTile = <T extends CatalogueGridItem>({
@@ -117,7 +166,8 @@ const CatalogueTile = <T extends CatalogueGridItem>({
     renderDetails,
     href,
     idPrefix,
-    keepMounted
+    keepMounted,
+    external
 }: TileProps<T>): React.ReactElement => {
     const {id, title} = item;
     const tileRef = React.useRef<HTMLElement | null>(null);
@@ -181,8 +231,10 @@ const CatalogueTile = <T extends CatalogueGridItem>({
 
     // The sheet is a modal in a portal: focus moving into it is not a blur out
     // of the tile, and the modal already handles Escape, the backdrop and
-    // handing focus back — so the desktop handlers stand down on touch.
-    const pointerHandlers = touch ? {} : {
+    // handing focus back — so the desktop handlers stand down on touch. With
+    // the details elsewhere, hover and focus open nothing and leaving the tile
+    // closes nothing: the selection stays until another tile takes it.
+    const pointerHandlers = touch ? {} : external ? {onKeyDown: handleKeyDown} : {
         onMouseEnter: () => schedule(() => onOpen(id), CATALOGUE_OPEN_DELAY_MS),
         onMouseLeave: () => schedule(() => onClose(id), CATALOGUE_CLOSE_DELAY_MS),
         onFocus: () => {
@@ -195,6 +247,17 @@ const CatalogueTile = <T extends CatalogueGridItem>({
     const handleClick = (event: React.MouseEvent) => {
         skipFocusOpen.current = false;
         clearTimer();
+        if (external) {
+            // A link tile still opens in a new tab or window on a modified
+            // click; a plain one selects it, like a button tile.
+            if (href) {
+                if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+                event.preventDefault();
+            }
+            if (open) onClose(id);
+            else onOpen(id);
+            return;
+        }
         if (href) {
             // A link follows itself on desktop; on touch the href stays for
             // crawlers and script-less pages, and a tap shows the details.
@@ -228,7 +291,7 @@ const CatalogueTile = <T extends CatalogueGridItem>({
         'data-testid': 'catalogue-tile',
         // A closed, kept-mounted panel is display:none — out of the
         // accessibility tree, while its description still names the tile's.
-        'aria-describedby': keepMounted && !touch ? descriptionId : undefined,
+        'aria-describedby': keepMounted && !touch && !external ? descriptionId : undefined,
         sx: catalogueTileStyle,
         onPointerDown: () => {
             skipFocusOpen.current = true;
@@ -237,15 +300,23 @@ const CatalogueTile = <T extends CatalogueGridItem>({
     };
 
     return (
-        <ClickAwayListener onClickAway={() => !touch && open && onClose(id)}>
+        <ClickAwayListener onClickAway={() => !touch && !external && open && onClose(id)}>
             <Box ref={wrapperRef} component="li" sx={catalogueTileWrapperStyle} {...pointerHandlers}>
                 {href ? (
                     <Box
                         component={NextLinkComposed}
                         to={href}
                         aria-haspopup={touch ? 'dialog' : undefined}
+                        // A link cannot be pressed; the selected one in a set
+                        // is the current one.
+                        aria-current={external && open ? 'true' : undefined}
                         {...tileProps}
                     >
+                        {contents}
+                    </Box>
+                ) : external ? (
+                    // A toggle that selects what the page's details show.
+                    <Box component="button" type="button" aria-pressed={open} {...tileProps}>
                         {contents}
                     </Box>
                 ) : (
@@ -300,7 +371,7 @@ const CatalogueTile = <T extends CatalogueGridItem>({
                             {renderDetails(item, {titleId, descriptionId, inSheet: true, close})}
                         </Box>
                     </SwipeableDrawer>
-                ) : (
+                ) : external ? null : (
                     <Popper
                         open={open}
                         anchorEl={anchor}
@@ -344,11 +415,17 @@ export const CatalogueGrid = <T extends CatalogueGridItem>({
     empty,
     idPrefix = 'catalogue',
     keepPanelsMounted = false,
+    openId: openIdProp,
+    onOpenChange,
+    detailsMode = 'panel',
     sx
 }: CatalogueGridProps<T>): React.ReactElement => {
-    const ownOpenState = React.useState<string | null>(null);
+    const ownOpenState = useCatalogueOpenState(openIdProp, onOpenChange);
+    // Inside a TieredCatalogueGrid the shared state wins; the tiers' own
+    // openId and onOpenChange are taken there.
     const [openId, setOpenId] = React.useContext(CatalogueOpenContext) ?? ownOpenState;
     const touch = useMediaQuery(TOUCH_ONLY_QUERY);
+    const external = detailsMode === 'external' && !touch;
     const handleOpen = React.useCallback((id: string) => setOpenId(id), [setOpenId]);
     // Only the tile that is open may close it: a stale close timer from the
     // tile the pointer just left must not shut the panel it moved on to.
@@ -379,6 +456,7 @@ export const CatalogueGrid = <T extends CatalogueGridItem>({
                             href={getHref?.(item)}
                             idPrefix={idPrefix}
                             keepMounted={keepPanelsMounted}
+                            external={external}
                         />
                     ))}
                 </Box>

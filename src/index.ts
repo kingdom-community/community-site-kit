@@ -22,12 +22,14 @@ export {
     CatalogueGrid,
     TOUCH_ONLY_QUERY,
     type CatalogueDetailsContext,
+    type CatalogueDetailsMode,
     type CatalogueGridItem,
     type CatalogueGridProps
 } from './components/CatalogueGrid.js';
 export {
     CatalogueFilterBar,
     type CatalogueFilterBarFacet,
+    type CatalogueFilterBarOrientation,
     type CatalogueFilterBarProps
 } from './components/CatalogueFilterBar.js';
 export {TieredCatalogueGrid, type TieredCatalogueGridProps} from './components/TieredCatalogueGrid.js';

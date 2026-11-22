@@ -5,6 +5,7 @@ import React from 'react';
 import {
     CatalogueGrid,
     CatalogueOpenContext,
+    useCatalogueOpenState,
     type CatalogueGridItem,
     type CatalogueGridProps
 } from './CatalogueGrid.js';
@@ -19,7 +20,8 @@ const {Box, Typography} = Mui;
 // filter leaves empty is not shown, and `empty` stands in when every tier is.
 // The open panel is held here rather than per tier: a visitor sees one
 // catalogue, and each grid on its own would leave a panel open in one tier
-// while another tier opened a second.
+// while another tier opened a second. A page's openId and onOpenChange control
+// that shared state; detailsMode passes through to every tier.
 
 export interface TieredCatalogueGridProps<T extends CatalogueGridItem>
     extends Omit<CatalogueGridProps<T>, 'heading' | 'sectionId' | 'idPrefix'> {
@@ -42,11 +44,13 @@ export const TieredCatalogueGrid = <T extends CatalogueGridItem>({
     toolbar,
     empty,
     sx,
+    openId,
+    onOpenChange,
     ...grid
 }: TieredCatalogueGridProps<T>): React.ReactElement => {
     const headingId = `${sectionId}-heading`;
     const groups = groupByTier(items, tiers, tierOf);
-    const openState = React.useState<string | null>(null);
+    const openState = useCatalogueOpenState(openId, onOpenChange);
     return (
         <Box id={sectionId} component="section" aria-labelledby={headingId} sx={sx}>
             <Typography id={headingId} variant="h2" sx={visuallyHiddenStyle}>
