@@ -41,6 +41,12 @@ const ClearIcon = interopDefault(ClearIconImport);
 //
 // Pair it with CatalogueGrid's `toolbar` prop; the page owns the query and sort
 // state and runs filterCatalogue/sortCatalogue itself.
+//
+// orientation 'vertical' lays the same controls out for a sidebar instead:
+// always open (no fold), search on top, each facet a labelled group stacked
+// below it with its chips wrapping, and the sort as a menu at the bottom.
+
+export type CatalogueFilterBarOrientation = 'horizontal' | 'vertical';
 
 export interface CatalogueFilterBarFacet<T> {
     facet: CatalogueFacet<T>;
@@ -64,7 +70,108 @@ export interface CatalogueFilterBarProps<T> {
     onSortChange?: (key: string) => void;
     // Prefix for element ids, so two bars on one page cannot collide.
     idPrefix?: string;
+    // 'horizontal' (the default) is the folding toolbar above the grid;
+    // 'vertical' is the always-open column for a sidebar.
+    orientation?: CatalogueFilterBarOrientation;
 }
+
+interface SearchFieldProps {
+    noun: string;
+    text: string;
+    setText: (next: string) => void;
+    fullWidth?: boolean;
+}
+
+const SearchField: React.FC<SearchFieldProps> = ({noun, text, setText, fullWidth = false}) => (
+    <TextField
+        size="small"
+        placeholder={`Search ${noun}…`}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        inputProps={{'aria-label': `Search ${noun}`}}
+        fullWidth={fullWidth}
+        sx={fullWidth ? undefined : {minWidth: 240}}
+        InputProps={{
+            startAdornment: (
+                <InputAdornment position="start">
+                    <SearchIcon fontSize="small"/>
+                </InputAdornment>
+            ),
+            endAdornment: text ? (
+                <InputAdornment position="end">
+                    <IconButton size="small" aria-label="Clear search" onClick={() => setText('')}>
+                        <ClearIcon fontSize="small"/>
+                    </IconButton>
+                </InputAdornment>
+            ) : undefined,
+        }}
+    />
+);
+
+interface FacetControlProps<T> {
+    entry: CatalogueFilterBarFacet<T>;
+    values: readonly string[];
+    current: string | null;
+    select: (key: string, value: string | null) => void;
+}
+
+const anyChoice = <T, >({facet, anyLabel}: CatalogueFilterBarFacet<T>): string =>
+    anyLabel ?? `Any ${facet.label.toLowerCase()}`;
+
+const FacetMenu = <T, >({
+    entry,
+    values,
+    current,
+    select,
+    idPrefix,
+    fullWidth
+}: FacetControlProps<T> & {idPrefix: string; fullWidth: boolean}): React.ReactElement => {
+    const {facet} = entry;
+    const labelId = `${idPrefix}-${facet.key}-label`;
+    return (
+        <FormControl size="small" fullWidth={fullWidth} sx={fullWidth ? undefined : {minWidth: 220}}>
+            <InputLabel id={labelId}>{facet.label}</InputLabel>
+            <Select
+                labelId={labelId}
+                label={facet.label}
+                value={current ?? ''}
+                onChange={(e) => select(facet.key, e.target.value === '' ? null : String(e.target.value))}
+                data-testid={`facet-${facet.key}`}
+            >
+                <MenuItem value="">{anyChoice(entry)}</MenuItem>
+                {values.map((value) => (
+                    <MenuItem key={value} value={value}>{value}</MenuItem>
+                ))}
+            </Select>
+        </FormControl>
+    );
+};
+
+const FacetChips = <T, >({entry, values, current, select}: FacetControlProps<T>): React.ReactElement => (
+    <>
+        <Chip
+            label={anyChoice(entry)}
+            size="small"
+            clickable
+            color={current === null ? 'primary' : 'default'}
+            variant={current === null ? 'filled' : 'outlined'}
+            onClick={() => select(entry.facet.key, null)}
+            aria-pressed={current === null}
+        />
+        {values.map((value) => (
+            <Chip
+                key={value}
+                label={value}
+                size="small"
+                clickable
+                color={current === value ? 'primary' : 'default'}
+                variant={current === value ? 'filled' : 'outlined'}
+                onClick={() => select(entry.facet.key, current === value ? null : value)}
+                aria-pressed={current === value}
+            />
+        ))}
+    </>
+);
 
 export const CatalogueFilterBar = <T, >({
     items,
@@ -77,6 +184,7 @@ export const CatalogueFilterBar = <T, >({
     sortKey,
     onSortChange,
     idPrefix = 'catalogue',
+    orientation = 'horizontal',
 }: CatalogueFilterBarProps<T>): React.ReactElement => {
     const [open, setOpen] = React.useState(false);
     const active = isCatalogueQueryActive(query);
@@ -91,15 +199,86 @@ export const CatalogueFilterBar = <T, >({
     const select = (key: string, value: string | null) =>
         onQueryChange({...query, facets: {...query.facets, [key]: value}});
     const panelId = `${idPrefix}-filters`;
+    const sort = sortOptions && sortOptions.length > 1 && onSortChange ? {options: sortOptions, onChange: onSortChange} : null;
+    const summary = active ? (
+        <Typography variant="body2" color="text.secondary" sx={{mr: 'auto'}} role="status" data-testid="filter-summary">
+            Showing {shownCount} of {items.length} {noun}
+        </Typography>
+    ) : null;
+    // Each facet with a value in use, and what it currently holds.
+    const shownFacets = facets
+        .map((entry) => ({entry, values: facetValues(items, entry.facet), current: selected(entry.facet.key)}))
+        .filter(({values}) => values.length > 0);
+
+    if (orientation === 'vertical') {
+        const sortLabelId = `${idPrefix}-sort-label`;
+        return (
+            <Stack
+                id={panelId}
+                data-testid="catalogue-filters"
+                role="search"
+                aria-label={`Search and filter ${noun}`}
+                spacing={2.5}
+                sx={{width: '100%'}}
+            >
+                <SearchField noun={noun} text={text} setText={setText} fullWidth/>
+                {summary}
+                {shownFacets.map(({entry, values, current}) => {
+                    if (entry.display === 'menu') {
+                        return (
+                            <FacetMenu
+                                key={entry.facet.key}
+                                entry={entry}
+                                values={values}
+                                current={current}
+                                select={select}
+                                idPrefix={idPrefix}
+                                fullWidth
+                            />
+                        );
+                    }
+                    const groupLabelId = `${idPrefix}-${entry.facet.key}-group-label`;
+                    return (
+                        <Box key={entry.facet.key} role="group" aria-labelledby={groupLabelId}>
+                            <Typography
+                                id={groupLabelId}
+                                variant="subtitle2"
+                                component="p"
+                                color="text.secondary"
+                                sx={{mb: 1}}
+                            >
+                                {entry.facet.label}
+                            </Typography>
+                            <Stack direction="row" useFlexGap sx={{flexWrap: 'wrap', gap: 1}}>
+                                <FacetChips entry={entry} values={values} current={current} select={select}/>
+                            </Stack>
+                        </Box>
+                    );
+                })}
+                {sort ? (
+                    <FormControl size="small" fullWidth>
+                        <InputLabel id={sortLabelId}>Sort by</InputLabel>
+                        <Select
+                            labelId={sortLabelId}
+                            label="Sort by"
+                            value={sortKey ?? ''}
+                            onChange={(e) => sort.onChange(String(e.target.value))}
+                            data-testid="catalogue-sort"
+                        >
+                            {sort.options.map((option) => (
+                                <MenuItem key={option.key} value={option.key}>{option.label}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                ) : null}
+            </Stack>
+        );
+    }
 
     return (
         <>
             <Box sx={{display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1, minHeight: 40, mb: 1}}>
-                {active && (
-                    <Typography variant="body2" color="text.secondary" sx={{mr: 'auto'}} role="status" data-testid="filter-summary">
-                        Showing {shownCount} of {items.length} {noun}
-                    </Typography>
-                )}
+                {summary}
                 <Button
                     size="small"
                     startIcon={<SearchIcon fontSize="small"/>}
@@ -116,39 +295,18 @@ export const CatalogueFilterBar = <T, >({
 
             <Collapse in={open} id={panelId} data-testid="catalogue-filters">
                 <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 3}}>
-                    <TextField
-                        size="small"
-                        placeholder={`Search ${noun}…`}
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                        inputProps={{'aria-label': `Search ${noun}`}}
-                        sx={{minWidth: 240}}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <SearchIcon fontSize="small"/>
-                                </InputAdornment>
-                            ),
-                            endAdornment: text ? (
-                                <InputAdornment position="end">
-                                    <IconButton size="small" aria-label="Clear search" onClick={() => setText('')}>
-                                        <ClearIcon fontSize="small"/>
-                                    </IconButton>
-                                </InputAdornment>
-                            ) : undefined,
-                        }}
-                    />
-                    {sortOptions && sortOptions.length > 1 && onSortChange ? (
+                    <SearchField noun={noun} text={text} setText={setText}/>
+                    {sort ? (
                         <ToggleButtonGroup
                             value={sortKey}
                             exclusive
                             onChange={(_e, next: string | null) => {
-                                if (next !== null) onSortChange(next);
+                                if (next !== null) sort.onChange(next);
                             }}
                             aria-label="Sort order"
                             size="small"
                         >
-                            {sortOptions.map((option) => (
+                            {sort.options.map((option) => (
                                 <ToggleButton key={option.key} value={option.key}>
                                     {option.label}
                                 </ToggleButton>
@@ -158,67 +316,30 @@ export const CatalogueFilterBar = <T, >({
                 </Box>
 
                 <Stack spacing={1.5} sx={{alignItems: 'center', mb: 3}}>
-                    {facets.map(({facet, display, anyLabel}) => {
-                        const values = facetValues(items, facet);
-                        if (values.length === 0) return null;
-                        const current = selected(facet.key);
-                        const any = anyLabel ?? `Any ${facet.label.toLowerCase()}`;
-                        if (display === 'menu') {
-                            const labelId = `${idPrefix}-${facet.key}-label`;
-                            return (
-                                <FormControl key={facet.key} size="small" sx={{minWidth: 220}}>
-                                    <InputLabel id={labelId}>{facet.label}</InputLabel>
-                                    <Select
-                                        labelId={labelId}
-                                        label={facet.label}
-                                        value={current ?? ''}
-                                        onChange={(e) => select(facet.key, e.target.value === '' ? null : String(e.target.value))}
-                                        data-testid={`facet-${facet.key}`}
-                                    >
-                                        <MenuItem value="">{any}</MenuItem>
-                                        {values.map((value) => (
-                                            <MenuItem key={value} value={value}>{value}</MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            );
-                        }
-                        return (
-                            <Stack
-                                key={facet.key}
-                                direction="row"
-                                useFlexGap
-                                sx={{justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: 1}}
-                                role="group"
-                                aria-label={`Filter by ${facet.label.toLowerCase()}`}
-                            >
-                                <Chip
-                                    label={any}
-                                    size="small"
-                                    clickable
-                                    color={current === null ? 'primary' : 'default'}
-                                    variant={current === null ? 'filled' : 'outlined'}
-                                    onClick={() => select(facet.key, null)}
-                                    aria-pressed={current === null}
-                                />
-                                {values.map((value) => (
-                                    <Chip
-                                        key={value}
-                                        label={value}
-                                        size="small"
-                                        clickable
-                                        color={current === value ? 'primary' : 'default'}
-                                        variant={current === value ? 'filled' : 'outlined'}
-                                        onClick={() => select(facet.key, current === value ? null : value)}
-                                        aria-pressed={current === value}
-                                    />
-                                ))}
-                            </Stack>
-                        );
-                    })}
+                    {shownFacets.map(({entry, values, current}) => entry.display === 'menu' ? (
+                        <FacetMenu
+                            key={entry.facet.key}
+                            entry={entry}
+                            values={values}
+                            current={current}
+                            select={select}
+                            idPrefix={idPrefix}
+                            fullWidth={false}
+                        />
+                    ) : (
+                        <Stack
+                            key={entry.facet.key}
+                            direction="row"
+                            useFlexGap
+                            sx={{justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: 1}}
+                            role="group"
+                            aria-label={`Filter by ${entry.facet.label.toLowerCase()}`}
+                        >
+                            <FacetChips entry={entry} values={values} current={current} select={select}/>
+                        </Stack>
+                    ))}
                 </Stack>
             </Collapse>
         </>
     );
 };
-

@@ -503,6 +503,52 @@ filter" button, unfolds by itself while a filter is active, and says "Showing N
 of M". The page owns the query and sort state and runs `filterCatalogue` and
 `sortCatalogue` itself.
 
+#### Details in a pane of the page's own, and a filter sidebar
+
+A layout that pins the open item's details beside the grid, with the filters in
+a sidebar, uses three optional props; without them both components behave as
+above.
+
+- `openId?: string | null` and `onOpenChange?: (id: string | null) => void` on
+  `CatalogueGrid` (and `TieredCatalogueGrid`, where they hold the one open item
+  across every tier). With `openId` the page holds the open item; without it the
+  grid holds its own and still reports each change to `onOpenChange`.
+- `detailsMode?: 'panel' | 'external'` (default `'panel'`). With `'external'`,
+  on a screen that can hover the grid renders no panel: a click, Enter or Space
+  selects a tile and a second one deselects it, Escape deselects, and hover,
+  focus, leaving the tile and clicking elsewhere change nothing. The selected
+  tile has `data-open="true"`; a button tile is a toggle (`aria-pressed`), a link
+  tile is `aria-current="true"`. A plain click on a link tile selects it rather
+  than following the link; a modified click (new tab) still follows it. On a
+  touch-only screen (`TOUCH_ONLY_QUERY`) a tap still opens the bottom sheet, and
+  still reports the open item: a pinned pane is a wide-screen layout, so a page
+  that also shows the pane on such a screen should hide it there.
+- `orientation?: 'horizontal' | 'vertical'` on `CatalogueFilterBar` (default
+  `'horizontal'`). `'vertical'` is always open, with no "Search & filter"
+  toggle: a `search` landmark with the search field on top, the "Showing N of M"
+  line under it while a filter is active, each facet below as a labelled group
+  (chips wrap; a menu facet is a full-width menu), and the sort as a "Sort by"
+  menu at the bottom. The query and sort contract is the same.
+
+```tsx
+const [openId, setOpenId] = React.useState<string | null>(null);
+const open = shown.find((p) => p.id === openId);
+
+<Box sx={{display: 'grid', gridTemplateColumns: '240px 1fr 320px', gap: 3}}>
+    <CatalogueFilterBar orientation="vertical" items={all} shownCount={shown.length} ... />
+    <CatalogueGrid
+        items={shown}
+        heading="Projects"
+        renderIcon={...}
+        renderDetails={(p, ctx) => <ProjectDetails project={p} titleId={ctx.titleId}/>}  // the touch sheet
+        detailsMode="external"
+        openId={openId}
+        onOpenChange={setOpenId}
+    />
+    <aside aria-live="polite">{open ? <ProjectDetails project={open}/> : <p>Pick a project.</p>}</aside>
+</Box>
+```
+
 #### Tiers
 
 `TieredCatalogueGrid` lays a catalogue out in tiers, most finished first, so a

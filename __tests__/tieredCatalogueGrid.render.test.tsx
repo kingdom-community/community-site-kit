@@ -133,6 +133,46 @@ describe('TieredCatalogueGrid', () => {
         expect(panel('Beta')).toBeTruthy();
     });
 
+    it('takes openId and onOpenChange for the whole, and passes detailsMode to every tier', () => {
+        const onOpenChange = vi.fn();
+        const {rerender} = render(
+            <TieredCatalogueGrid
+                items={ITEMS}
+                tiers={TIERS}
+                tierOf={tierOf}
+                heading="Games"
+                sectionId="games"
+                renderIcon={() => null}
+                renderDetails={(item, {titleId}) => <h3 id={titleId}>{item.title}</h3>}
+                openId="r"
+                onOpenChange={onOpenChange}
+                detailsMode="external"
+            />
+        );
+        expect(tile('Roam').getAttribute('aria-pressed')).toBe('true');
+        expect(panel('Roam')).toBeNull();
+        fireEvent.click(tile('Beta'));
+        expect(onOpenChange).toHaveBeenLastCalledWith('b');
+        // Held by the page, so nothing moves until the page says so.
+        expect(tile('Roam').getAttribute('aria-pressed')).toBe('true');
+        rerender(
+            <TieredCatalogueGrid
+                items={ITEMS}
+                tiers={TIERS}
+                tierOf={tierOf}
+                heading="Games"
+                sectionId="games"
+                renderIcon={() => null}
+                renderDetails={(item, {titleId}) => <h3 id={titleId}>{item.title}</h3>}
+                openId="b"
+                onOpenChange={onOpenChange}
+                detailsMode="external"
+            />
+        );
+        expect(tile('Roam').getAttribute('aria-pressed')).toBe('false');
+        expect(tile('Beta').getAttribute('aria-pressed')).toBe('true');
+    });
+
     it('shows `empty`, with the toolbar still there, when no item is left', () => {
         renderGrid([]);
         expect(screen.getByText('Nothing matches.')).toBeTruthy();

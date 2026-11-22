@@ -1,5 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {act, cleanup, fireEvent, render, screen, waitFor, within} from '@testing-library/react';
+import React from 'react';
 
 vi.mock('next/router', () => ({useRouter: () => ({pathname: '/', asPath: '/'})}));
 
@@ -255,6 +256,144 @@ describe('CatalogueGrid', () => {
             act(() => vi.advanceTimersByTime(CATALOGUE_OPEN_DELAY_MS * 2));
             expect(screen.queryByRole('dialog')).toBeNull();
             expect(screen.queryByRole('group', {name: 'Roam'})).toBeNull();
+        });
+    });
+
+    describe('with a page-held open item (openId, onOpenChange)', () => {
+        // A page as a site would write one: it holds the open id and shows it.
+        const Controlled: React.FC<Partial<React.ComponentProps<typeof CatalogueGrid<Item>>>> = (props) => {
+            const [openId, setOpenId] = React.useState<string | null>(null);
+            return (
+                <>
+                    <CatalogueGrid
+                        items={ITEMS}
+                        heading="Projects"
+                        renderIcon={() => null}
+                        renderDetails={renderDetails}
+                        openId={openId}
+                        onOpenChange={setOpenId}
+                        {...props}
+                    />
+                    <output data-testid="open-id">{openId ?? 'none'}</output>
+                    <button type="button" onClick={() => setOpenId('roam')}>Open Roam from outside</button>
+                </>
+            );
+        };
+        const openIdShown = () => screen.getByTestId('open-id').textContent;
+
+        it('reports what opens and closes, and opens what the page sets', () => {
+            render(<Controlled/>);
+            fireEvent.focus(tile('Medieval Factions'));
+            expect(openIdShown()).toBe('mf');
+            expect(screen.getByRole('group', {name: 'Medieval Factions'})).toBeTruthy();
+            fireEvent.click(screen.getByRole('button', {name: 'Open Roam from outside'}));
+            expect(screen.queryByRole('group', {name: 'Medieval Factions'})).toBeNull();
+            expect(screen.getByRole('group', {name: 'Roam'})).toBeTruthy();
+            fireEvent.click(screen.getByRole('button', {name: 'Done with Roam'}));
+            expect(openIdShown()).toBe('none');
+        });
+
+        it('opens nothing the page does not set', () => {
+            const onOpenChange = vi.fn();
+            grid({openId: null, onOpenChange});
+            fireEvent.focus(tile('Roam'));
+            expect(onOpenChange).toHaveBeenCalledWith('roam');
+            expect(screen.queryByRole('group', {name: 'Roam'})).toBeNull();
+        });
+
+        it('still reports to onOpenChange when the grid holds the state itself', () => {
+            const onOpenChange = vi.fn();
+            grid({onOpenChange});
+            fireEvent.focus(tile('Roam'));
+            expect(screen.getByRole('group', {name: 'Roam'})).toBeTruthy();
+            expect(onOpenChange).toHaveBeenLastCalledWith('roam');
+            fireEvent.blur(tile('Roam'));
+            expect(onOpenChange).toHaveBeenLastCalledWith(null);
+        });
+
+        describe("in detailsMode 'external'", () => {
+            it('renders no panel; a click selects a tile and marks it pressed, a second click deselects it', () => {
+                render(<Controlled detailsMode="external"/>);
+                const roam = tile('Roam');
+                expect(roam.getAttribute('aria-pressed')).toBe('false');
+                expect(roam.hasAttribute('aria-expanded')).toBe(false);
+                fireEvent.pointerDown(roam);
+                fireEvent.click(roam);
+                expect(openIdShown()).toBe('roam');
+                expect(roam.getAttribute('aria-pressed')).toBe('true');
+                expect(roam.getAttribute('data-open')).toBe('true');
+                expect(screen.queryByRole('group', {name: 'Roam'})).toBeNull();
+                expect(screen.queryByText('A survival game.')).toBeNull();
+
+                fireEvent.click(tile('Medieval Factions'));
+                expect(openIdShown()).toBe('mf');
+                expect(roam.getAttribute('aria-pressed')).toBe('false');
+                fireEvent.click(tile('Medieval Factions'));
+                expect(openIdShown()).toBe('none');
+            });
+
+            it('opens nothing on hover or focus, and keeps the selection when the pointer or focus leaves', () => {
+                vi.useFakeTimers();
+                render(<Controlled detailsMode="external"/>);
+                const mf = tile('Medieval Factions');
+                fireEvent.mouseEnter(mf.parentElement!);
+                fireEvent.focus(mf);
+                act(() => vi.advanceTimersByTime(CATALOGUE_OPEN_DELAY_MS * 2));
+                expect(openIdShown()).toBe('none');
+
+                fireEvent.click(mf);
+                fireEvent.mouseLeave(mf.parentElement!);
+                fireEvent.blur(mf);
+                fireEvent.click(document.body);
+                act(() => vi.advanceTimersByTime(CATALOGUE_CLOSE_DELAY_MS * 2));
+                expect(openIdShown()).toBe('mf');
+            });
+
+            it('deselects on Escape', () => {
+                render(<Controlled detailsMode="external"/>);
+                fireEvent.click(tile('Roam'));
+                fireEvent.keyDown(tile('Roam'), {key: 'Escape'});
+                expect(openIdShown()).toBe('none');
+            });
+
+            it('selects a link tile on a plain click instead of following it, marking it current', () => {
+                render(<Controlled detailsMode="external" getHref={(item) => `/resources/${item.id}`}/>);
+                const link = screen.getByRole('link', {name: 'Roam'});
+                const click = new MouseEvent('click', {bubbles: true, cancelable: true});
+                act(() => {
+                    link.dispatchEvent(click);
+                });
+                expect(click.defaultPrevented).toBe(true);
+                expect(openIdShown()).toBe('roam');
+                expect(link.getAttribute('aria-current')).toBe('true');
+                expect(screen.getByRole('link', {name: 'Medieval Factions'}).hasAttribute('aria-current')).toBe(false);
+            });
+
+            it('lets a modified click on a link tile through, for a new tab', () => {
+                render(<Controlled detailsMode="external" getHref={(item) => `/resources/${item.id}`}/>);
+                const link = screen.getByRole('link', {name: 'Roam'});
+                const click = new MouseEvent('click', {bubbles: true, cancelable: true, ctrlKey: true});
+                act(() => {
+                    link.dispatchEvent(click);
+                });
+                expect(openIdShown()).toBe('none');
+            });
+
+            it('does not describe tiles by a panel it never renders', () => {
+                grid({detailsMode: 'external', keepPanelsMounted: true});
+                expect(tile('Roam').hasAttribute('aria-describedby')).toBe(false);
+                expect(screen.queryByText('A survival game.')).toBeNull();
+            });
+
+            it('keeps the bottom sheet on a touch-only screen, still reporting the open item', () => {
+                setTouch(true);
+                render(<Controlled detailsMode="external"/>);
+                fireEvent.click(tile('Roam'));
+                expect(openIdShown()).toBe('roam');
+                const sheet = screen.getByRole('dialog', {name: 'Roam'});
+                fireEvent.click(within(sheet).getByRole('button', {name: 'Close Roam'}));
+                expect(openIdShown()).toBe('none');
+            });
         });
     });
 });
